@@ -73,11 +73,11 @@ jobs:
         env:
           MP_API_KEY: ${{ secrets.MP_API_KEY }}
         run: >-
-          pipx run tox
+          tox
           --installpkg '${{ needs.prepare.outputs.wheel-distribution }}'
           -- -rFEx --durations 10 --color yes
       - name: Generate coverage report
-        run: pipx run coverage lcov -o coverage.lcov
+        run: coverage lcov -o coverage.lcov
       - name: Upload partial coverage report
         uses: coverallsapp/github-action@master
         with:
