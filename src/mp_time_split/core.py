@@ -22,9 +22,20 @@ References:
 
 import argparse
 import logging
+import re
 import sys
+from typing import List
+
+import pandas as pd
+import pybtex.errors
+from mp_api import MPRester
+from mp_api.core.client import DEFAULT_API_KEY
+from pybtex.database.input import bibtex
+from tqdm import tqdm
 
 from mp_time_split import __version__
+
+pybtex.errors.set_strict_mode(False)
 
 __author__ = "sgbaird"
 __copyright__ = "sgbaird"
@@ -36,7 +47,7 @@ _logger = logging.getLogger(__name__)
 # ---- Python API ----
 # The functions defined in this section can be imported by users in their
 # Python scripts/interactive interpreter, e.g. via
-# `from mp_time_split.skeleton import fib`,
+# `from ${qual_pkg}.skeleton import fib`,
 # when using this Python module as a library.
 
 
@@ -54,6 +65,75 @@ def fib(n):
     for _i in range(n - 1):
         a, b = b, a + b
     return a
+
+
+# download MP entries
+api_key = DEFAULT_API_KEY
+fields = ["structure", "material_id", "theoretical"]
+doi_fields = ["doi", "bibtex", "task_id"]
+nsites = (1, 2)
+elements = ["V"]
+use_theoretical = False
+with MPRester(api_key) as mpr:
+    results = mpr.summary.search(nsites=nsites, elements=elements, fields=fields)
+
+    material_id = []
+    structure = []
+    theoretical = []
+
+    for r in results:
+        material_id.append(str(r.material_id))
+        structure.append(r.structure)
+        theoretical.append(r.theoretical)
+
+    index = [int(mid.replace("mp-", "")) for mid in material_id]
+    df = pd.DataFrame(
+        dict(material_id=material_id, structure=structure, theoretical=theoretical),
+        index=index,
+    )
+
+    if not use_theoretical:
+        expt_df = df.query("theoretical == False")
+        expt_material_id = expt_df.material_id.tolist()
+        # mpr.provenance.search(nsites=nsites, elements=elements)
+        # https://github.com/materialsproject/api/issues/613
+        provenance_results = [
+            mpr.provenance.get_data_by_id(mid) for mid in tqdm(expt_material_id)
+        ]
+
+        # extract earliest ICSD year
+        discovery: List[dict] = []
+        for pr in tqdm(provenance_results):
+            parser = bibtex.Parser()
+            references = "".join(pr.references)
+            refs = parser.parse_string(references)
+            entries = refs.entries
+            entries_by_year = [
+                (int(entry.fields["year"]), entry)
+                for _, entry in entries.items()
+                if "year" in entry.fields and re.match(r"\d{4}", entry.fields["year"])
+            ]
+            if entries_by_year:
+                entries_by_year = sorted(entries_by_year, key=lambda x: x[0])
+                first_report = {
+                    "year": entries_by_year[0][0],
+                    "authors": entries_by_year[0][1].persons["author"],
+                }
+                first_report["authors"] = [
+                    str(auth) for auth in first_report["authors"]
+                ]
+                first_report["num_authors"] = len(first_report["authors"])
+                discovery.append(first_report)
+            else:
+                discovery.append(dict(year=None, authors=None, num_authors=None))
+
+        year = [disc["year"] for disc in discovery]
+
+        expt_df["discovery"] = discovery
+        expt_df["year"] = year
+
+
+# TimeSeriesSplit
 
 
 # ---- CLI ----
@@ -76,7 +156,7 @@ def parse_args(args):
     parser.add_argument(
         "--version",
         action="version",
-        version="mp_time_split {ver}".format(ver=__version__),
+        version=f"$mp_time_split {__version__}",
     )
     parser.add_argument(dest="n", help="n-th Fibonacci number", type=int, metavar="INT")
     parser.add_argument(
@@ -144,6 +224,12 @@ if __name__ == "__main__":
     # After installing your project with pip, users can also run your Python
     # modules as scripts via the ``-m`` flag, as defined in PEP 338::
     #
-    #     python -m mp_time_split.skeleton 42
+    #     python -m mp_time_split.core 42
     #
     run()
+
+
+# %% Code Graveyard
+# doi_results = mpr.doi.search(nsites=nsites, elements=elements, fields=doi_fields)
+# https://github.com/materialsproject/api/issues/612
+# doi_results = [mpr.doi.get_data_by_id(mid) for mid in material_id]
