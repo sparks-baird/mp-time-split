@@ -22,14 +22,21 @@ References:
 
 import argparse
 import logging
+import re
 import sys
+from typing import List, Optional, Tuple, Union
 
+import numpy as np
 import pandas as pd
 import pybtex.errors
+from emmet.core.provenance import ProvenanceDoc
+from mp_api import MPRester
+from mp_api.core.client import DEFAULT_API_KEY
+from pybtex.database.input import bibtex
+from sklearn.model_selection import TimeSeriesSplit
+from tqdm import tqdm
 
 from mp_time_split import __version__
-from mp_time_split.utils.data import fetch_data
-from mp_time_split.utils.split import AVAILABLE_MODES, mp_time_split
 
 pybtex.errors.set_strict_mode(False)
 
@@ -63,106 +70,210 @@ def fib(n):
     return a
 
 
-FOLDS = [0, 1, 2, 3, 4]
+# download MP entries
+# doi_fields = ["doi", "bibtex", "task_id"]
+nsites = (1, 4)
+elements = ["V"]
+use_theoretical = False
 
 
-class MPTimeSplit:
-    def __init__(
-        self,
-        nsites=None,
-        elements=None,
-        use_theoretical=False,
-        mode="TimeSeriesSplit",
-    ) -> None:
-        if mode not in AVAILABLE_MODES:
-            raise NotImplementedError(
-                f"mode={mode} not implemented. Use one of {AVAILABLE_MODES}"
-            )
+def get_discovery_dict(provenance_results: List[ProvenanceDoc]) -> List[dict]:
+    """Get a dictionary containing earliest bib info for each MP entry.
 
-        self.nsites = nsites
-        self.elements = elements
-        self.use_theoretical = use_theoretical
-        self.mode = mode
+    Modified from source:
+    "How do I do a time-split of Materials Project entries? e.g. pre-2018 vs. post-2018"
+    https://matsci.org/t/42584/4?u=sgbaird, answer by @Joseph_Montoya, Materials Project Alumni
 
-        self.folds = FOLDS
+    Parameters
+    ----------
+    provenance_results : List[ProvenanceDoc]
+        List of results from the ``ProvenanceRester`` API (:func:`mp_api.provenance`)
 
-    def fetch_data(self):
-        self.data = fetch_data(
-            nsites=self.nsites,
-            elements=self.elements,
-            use_theoretical=self.use_theoretical,
+    Returns
+    -------
+    discovery, List[dict]
+        Dictionary containing earliest bib info for each MP entry with keys: ``["year",
+        "authors", "num_authors"]``
+
+    Examples
+    --------
+    >>> with MPRester(api_key) as mpr:
+    ...     provenance_results = mpr.provenance.search(nsites=(1, 4), elements=["V"])
+    >>> discovery = get_discovery_dict(provenance_results)
+    [{'year': 1963, 'authors': ['Raub, E.', 'Fritzsche, W.'], 'num_authors': 2}, {'year': 1925, 'authors': ['Becker, K.', 'Ebert, F.'], 'num_authors': 2}, {'year': 1965, 'authors': ['Giessen, B.C.', 'Grant, N.J.'], 'num_authors': 2}, {'year': 1957, 'authors': ['Philip, T.V.', 'Beck, P.A.'], 'num_authors': 2}, {'year': 1963, 'authors': ['Darby, J.B.jr.'], 'num_authors': 1}, {'year': 1977, 'authors': ['Aksenova, T.V.', 'Kuprina, V.V.', 'Bernard, V.B.', 'Skolozdra, R.V.'], 'num_authors': 4}, {'year': 1964, 'authors': ['Maldonado, A.', 'Schubert, K.'], 'num_authors': 2}, {'year': 1962, 'authors': ['Darby, J.B.jr.', 'Lam, D.J.', 'Norton, L.J.', 'Downey, J.W.'], 'num_authors': 4}, {'year': 1925, 'authors': ['Becker, K.', 'Ebert, F.'], 'num_authors': 2}, {'year': 1959, 'authors': ['Dwight, A.E.'], 'num_authors': 1}] # noqa: E501
+    """
+    discovery = []
+    for pr in tqdm(provenance_results):
+        parser = bibtex.Parser()
+        references = "".join(pr.references)
+        refs = parser.parse_string(references)
+        entries = refs.entries
+        entries_by_year = [
+            (int(entry.fields["year"]), entry)
+            for _, entry in entries.items()
+            if "year" in entry.fields and re.match(r"\d{4}", entry.fields["year"])
+        ]
+        if entries_by_year:
+            entries_by_year = sorted(entries_by_year, key=lambda x: x[0])
+            first_report = {
+                "year": entries_by_year[0][0],
+                "authors": entries_by_year[0][1].persons["author"],
+            }
+            first_report["authors"] = [str(auth) for auth in first_report["authors"]]
+            first_report["num_authors"] = len(first_report["authors"])
+            discovery.append(first_report)
+        else:
+            discovery.append(dict(year=None, authors=None, num_authors=None))
+    return discovery
+
+
+def retrieve_data(
+    api_key: Union[str, DEFAULT_API_KEY] = DEFAULT_API_KEY,
+    fields: Optional[List[str]] = ["structure", "material_id", "theoretical"],
+    nsites: Optional[Tuple[int, int]] = None,
+    elements: Optional[List[str]] = None,
+    use_theoretical: bool = False,
+    return_both_if_experimental: bool = False,
+    **search_kwargs,
+) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
+    """Retrieve MP data sorted by MPID (theoretical+exptl) or pub year (exptl).
+
+    See `*How do I do a time-split of Materials Project entries? e.g. pre-2018 vs.
+    post-2018* <https://matsci.org/t/42584>`_
+
+    Output ``DataFrame``-s will contain all specified `fields` unless ``fields is
+    None``, in which case all :func:`MPRester().summary.available_fields` will be
+    returned. If return experimental data, the additional fields of ``provenance``,
+    ``discovery`` and ``year`` corresponding to
+    :func:`emmet.core.provenance.ProvenanceDoc`, a dictionary containing earliest year
+    and author information, and the earliest year, respectively, will also be returned.
+
+    Parameters
+    ----------
+    api_key : Union[str, DEFAULT_API_KEY]
+        :func:`mp_api` API Key. On Windows, can set as an environment variable via:
+        ``setx MP_API_KEY="abc123def456"``. By default:
+        :func:`mp_api.core.client.DEFAULT_API_KEY`
+        See also:
+         https://github.com/materialsproject/api/issues/566#issuecomment-1087941474
+    fields : Optional[List[str]]
+        fields (List[str]): List of fields to project. When searching, it is better to
+        only ask for the specific fields of interest to reduce the time taken to
+        retrieve the documents. See the :func:`MPRester().summary.available_fields`
+        property to see a list of fields to choose from. By default:
+        ``["structure", "material_id", "theoretical"]``.
+    nsites : Tuple[int, int]
+        Tuple of min and max number of sites used as filtering criteria, e.g. ``(1,
+        52)`` meaning at least ``1`` and no more than ``52`` sites. If ``None`` then no
+        compounds with any number of sites are allowed. By default None.
+    elements : List[str]
+        List of element symbols, e.g. ``["Ni", "Fe"]``. If ``None`` then all elements
+        are allowed. By default None.
+    use_theoretical : bool, optional
+        Whether to include both theoretical and experimental compounds or to filter down
+        to only experimentally-verified compounds, by default False
+    return_both_if_experimental : bool, optional
+        Whether to return both the full DataFrame containing theoretical+experimental
+        (`df`) and the experimental-only DataFrame (`expt_df`) or only `expt_df`, by
+        default False. This is only applicable if `use_theoretical` is False.
+    search_kwargs : dict, optional
+        kwargs: Supported search terms, e.g. nelements_max=3 for the "materials" search
+        API. Consult the specific API route for valid search terms,
+        i.e. :func:`MPRester().summary.available_fields`
+
+    Returns
+    -------
+    df : pd.DataFrame
+        if `use_theoretical` then returns a DataFrame containing both theoretical and
+        experimental compounds.
+    expt_df, df : Tuple[pd.DataFrame, pd.DataFrame]
+        if not `use_theoretical` and `return_both_if_experimental, then returns two
+        :func:`pd.DataFrame`-s containing theoretical+experimental and
+        experimental-only.
+    expt_df : pd.DataFrame
+        if not `use_theoretical` and not `return_both_if_experimental`, then returns a
+        :func:`pd.DataFrame` containing the experimental-only compounds.
+
+    Examples
+    --------
+    >>> api_key = "abc123def456"
+    >>> nsites = (1, 52)
+    >>> elements = ["V"]
+    >>> expt_df = retrieve_data(api_key, nsites=nsites, elements=elements)
+
+    >>> df = retrieve_data(
+            api_key,
+            nsites=nsites,
+            elements=elements,
+            use_theoretical=True
         )
 
-        if not isinstance(self.data, pd.DataFrame):
-            raise ValueError("`self.data` is not a `pd.DataFrame`")
+    >>> expt_df, df = retrieve_data(
+            api_key,
+            nsites=nsites,
+            elements=elements,
+            use_theoretical=False,
+            return_both_if_experimental
+        )
+    """
+    if fields is not None:
+        if "material_id" not in fields:
+            fields.append("material_id")
+        if not use_theoretical and "theoretical" not in fields:
+            fields.append("theoretical")
 
-        self.trainval_splits, self.test_split = mp_time_split(
-            self.data, n_cv_splits=len(FOLDS), mode=self.mode
+    with MPRester(api_key) as mpr:
+        results = mpr.summary.search(
+            nsites=nsites, elements=elements, fields=fields, **search_kwargs
         )
 
-    def get_train_and_val_data(self, fold, target="energy_above_hull"):
-        if fold not in FOLDS:
-            raise ValueError(f"fold={fold} should be one of {FOLDS}")
-        inputs = self.data.structure
-        outputs = getattr(self.data, target)
+        if fields is not None:
+            field_data = []
+            for r in results:
+                field_data.append({field: getattr(r, field) for field in fields})
+        else:
+            field_data = results
 
-        # self.y = self.data[]
-        train_inputs, val_inputs = [
-            inputs.iloc[self.trainval_splits[fold][i]] for i in [0, 1]
-        ]
-        train_outputs, val_outputs = [
-            outputs.iloc[self.trainval_splits[fold][i]] for i in [0, 1]
-        ]
-        return train_inputs, val_inputs, train_outputs, val_outputs
+        material_id = [fd["material_id"] for fd in field_data]
 
-    def get_test_data(self):
-        return self.data.iloc[self.test_split]
+        index = [int(mid.replace("mp-", "")) for mid in material_id]
+        df = pd.DataFrame(field_data, index=index)
+        df = df.sort_index()
+
+        if not use_theoretical:
+            expt_df = df.query("theoretical == False")
+            expt_material_id = expt_df.material_id.tolist()
+            # mpr.provenance.search(task_ids=expt_material_id)
+            # https://github.com/materialsproject/api/issues/613
+            provenance_results = [
+                mpr.provenance.get_data_by_id(mid) for mid in tqdm(expt_material_id)
+            ]
+            expt_df["provenance"] = provenance_results
+
+            # extract earliest ICSD year
+            discovery = get_discovery_dict(provenance_results)
+            year = [disc["year"] for disc in discovery]
+            expt_df["discovery"] = discovery
+            expt_df["year"] = year
+
+            expt_df = expt_df.sort_values(by=["year"])
+
+    if use_theoretical:
+        return df
+    elif return_both_if_experimental:
+        return expt_df, df
+    else:
+        return expt_df
 
 
-# def split(df, n_compounds, n_splits, split_type):
-#     if split_type == "TimeSeriesSplit":
-#     # TimeSeriesSplit
-#         tscv = TimeSeriesSplit(gap=0, n_splits=n_splits + 1)
-#         splits = list(tscv.split(df))
+df = retrieve_data(nsites=nsites, elements=elements, use_theoretical=use_theoretical)
 
-#     elif split_type == "TimeSeriesOverflow":
-#         all_index = list(range(n_compounds))
-#         tscv = TimeSeriesSplit(gap=0, n_splits=n_splits + 1)
-#         train_indices = []
-#         test_indices = []
-#         for tri, _ in tscv.split(df):
-#             train_indices.append(tri)
-#         # use remainder of data rather than default `test_index`
-#             test_indices.append(np.setdiff1d(all_index, tri))
+assert isinstance(df, pd.DataFrame), "`df` is not a `pd.DataFrame`"
+tscv = TimeSeriesSplit(gap=0, n_splits=5, test_size=int(np.floor(0.8 * df.shape[0])))
+for train_index, test_index in tscv.split(df):
+    print("TRAIN:", train_index, "TEST:", test_index)
 
-#         splits = list(zip(train_indices, test_indices))
-
-#     elif split_type == "TimeKFold":
-#         kf = KFold(n_splits=n_splits + 2)
-#         splits = [indices[1] for indices in kf.split(df)]
-#         splits.pop(-1)
-
-#         running_index = np.empty(0, dtype=int)
-#         train_indices = []
-#         test_indices = []
-#         all_index = list(range(n_compounds))
-#         for s in splits:
-#             running_index = np.concatenate((running_index, s))
-#             train_indices.append(running_index)
-#             test_indices.append(np.setdiff1d(all_index, running_index))
-
-#         splits = list(zip(train_indices, test_indices))
-
-#     for train_index, test_index in splits:
-#         print("TRAIN:", train_index, "TEST:", test_index)
-
-# split(df, n_compounds, n_splits, split_type)
-# yield train_index, test_index
-
-# for train_index, test_index in kf.split(df):
-#     print("TRAIN:", train_index, "TEST:", test_index)
-
-# TODO: test size is too small, maybe swap train and test or do custom implementation
+# TODO: test size is too small, make swap train and test or do custom implementation
 # TODO: test size should be all remaining values probably, so could maybe just use a
 # setdiff based on train_index to overwrite the default test_index.
 
@@ -281,12 +392,3 @@ if __name__ == "__main__":
 # theoretical.append(r.theoretical)
 
 # mpr.provenance.search(nsites=nsites, elements=elements)
-
-# download MP entries
-# doi_fields = ["doi", "bibtex", "task_id"]
-
-
-# n_compounds = df.shape[0]
-
-# n_splits = 5
-# split_type = "TimeSeriesSplit"
