@@ -69,6 +69,7 @@ class MPTimeSplit:
         elements=None,
         use_theoretical=False,
         mode="TimeSeriesSplit",
+        target="energy_above_hull",
     ) -> None:
         if mode not in AVAILABLE_MODES:
             raise NotImplementedError(
@@ -79,8 +80,9 @@ class MPTimeSplit:
         self.elements = elements
         self.use_theoretical = use_theoretical
         self.mode = mode
-
         self.folds = FOLDS
+
+        self.target = target
 
     def fetch_data(self):
         self.data = fetch_data(
@@ -94,6 +96,8 @@ class MPTimeSplit:
         self.trainval_splits, self.test_split = mp_time_split(
             self.data, n_cv_splits=len(FOLDS), mode=self.mode
         )
+        self.inputs = self.data.structure
+        self.outputs = getattr(self.data, self.target)
         return self.data
 
     def load(self):
@@ -108,32 +112,34 @@ class MPTimeSplit:
         with zopen(data_path, "r") as f:
             expt_df = jsonpickle.decode(f.read())
         self.data = expt_df
+        self.inputs = self.data.structure
+        self.outputs = getattr(self.data, self.target)
 
-        # load_dataframe_from_json(data_path)
-        # with zopen(data_path, "rb") as f:
-        #     self.data = pd.DataFrame.read_json(json.load(f))
+        return self.data
 
-    def get_train_and_val_data(self, fold, target="energy_above_hull"):
+    def get_train_and_val_data(self, fold):
         if self.data is None:
             raise NameError("`fetch_data()` must be run first.")
         if fold not in FOLDS:
             raise ValueError(f"fold={fold} should be one of {FOLDS}")
-        inputs = self.data.structure
-        outputs = getattr(self.data, target)
 
         # self.y = self.data[]
         train_inputs, val_inputs = [
-            inputs.iloc[self.trainval_splits[fold][i]] for i in [0, 1]
+            self.inputs.iloc[tvs] for tvs in self.trainval_splits[fold]
         ]
         train_outputs, val_outputs = [
-            outputs.iloc[self.trainval_splits[fold][i]] for i in [0, 1]
+            self.outputs.iloc[tvs] for tvs in self.trainval_splits[fold]
         ]
         return train_inputs, val_inputs, train_outputs, val_outputs
 
     def get_test_data(self):
         if self.data is None:
             raise NameError("`fetch_data()` must be run first.")
-        return self.data.iloc[self.test_split]
+
+        train_inputs, test_inputs = [self.inputs.iloc[ts] for ts in self.test_split]
+        train_outputs, test_outputs = [self.outputs.iloc[ts] for ts in self.test_split]
+
+        return train_inputs, test_inputs, train_outputs, test_outputs
 
 
 # ---- CLI ----
@@ -288,3 +294,7 @@ if __name__ == "__main__":
 
 # for train_index, test_index in kf.split(df):
 #     print("TRAIN:", train_index, "TEST:", test_index)
+
+# load_dataframe_from_json(data_path)
+# with zopen(data_path, "rb") as f:
+#     self.data = pd.DataFrame.read_json(json.load(f))
