@@ -4,7 +4,6 @@ from typing import List, Optional, Tuple, Union
 
 import pandas as pd
 import pybtex.errors
-from emmet.core.provenance import ProvenanceDoc
 from mp_api import MPRester
 from mp_api.core.client import DEFAULT_API_KEY
 from pybtex.database.input import bibtex
@@ -136,18 +135,24 @@ def fetch_data(
         df = df.sort_index()
 
         if not use_theoretical:
+            # REVIEW: whether to use MPID class or str of MPIDs?
+            # if latter, `expt_df.material_id.apply(str).tolist()`
             expt_df = df.query("theoretical == False")
             expt_material_id = expt_df.material_id.tolist()
-            # mpr.provenance.search(task_ids=expt_material_id)
             # https://github.com/materialsproject/api/issues/613
-            provenance_results = [
-                mpr.provenance.get_data_by_id(mid) for mid in tqdm(expt_material_id)
-            ]
-            expt_df["provenance"] = provenance_results
+            provenance_results = mpr.provenance.search(
+                fields=["references", "material_id"]
+            )
+            provenance_ids = [fpr.material_id for fpr in provenance_results]
+            prov_df = pd.Series(
+                name="provenance", data=provenance_results, index=provenance_ids
+            )
+            expt_provenance_results = prov_df.loc[expt_material_id]
+            expt_df["provenance"] = expt_provenance_results
 
             # extract earliest ICSD year
-            references = [pr.references for pr in provenance_results]
-            discovery = _get_discovery_dict(provenance_results)
+            references = [pr.references for pr in expt_provenance_results]
+            discovery = _get_discovery_dict(references)
             year = [disc["year"] for disc in discovery]
             # https://stackoverflow.com/a/35387129/13697228
             expt_df = expt_df.assign(
@@ -164,7 +169,7 @@ def fetch_data(
         return expt_df
 
 
-def _get_discovery_dict(provenance_results: List[ProvenanceDoc]) -> List[dict]:
+def _get_discovery_dict(references: List[dict]) -> List[dict]:
     """Get a dictionary containing earliest bib info for each MP entry.
 
     Modified from source:
@@ -173,8 +178,9 @@ def _get_discovery_dict(provenance_results: List[ProvenanceDoc]) -> List[dict]:
 
     Parameters
     ----------
-    provenance_results : List[ProvenanceDoc]
-        List of results from the ``ProvenanceRester`` API (:func:`mp_api.provenance`)
+    provenance_results : List[dict]
+        List of references results, e.g. taken from from the ``ProvenanceRester`` API
+        results (:func:`mp_api.provenance`)
 
     Returns
     -------
@@ -190,10 +196,10 @@ def _get_discovery_dict(provenance_results: List[ProvenanceDoc]) -> List[dict]:
     [{'year': 1963, 'authors': ['Raub, E.', 'Fritzsche, W.'], 'num_authors': 2}, {'year': 1925, 'authors': ['Becker, K.', 'Ebert, F.'], 'num_authors': 2}, {'year': 1965, 'authors': ['Giessen, B.C.', 'Grant, N.J.'], 'num_authors': 2}, {'year': 1957, 'authors': ['Philip, T.V.', 'Beck, P.A.'], 'num_authors': 2}, {'year': 1963, 'authors': ['Darby, J.B.jr.'], 'num_authors': 1}, {'year': 1977, 'authors': ['Aksenova, T.V.', 'Kuprina, V.V.', 'Bernard, V.B.', 'Skolozdra, R.V.'], 'num_authors': 4}, {'year': 1964, 'authors': ['Maldonado, A.', 'Schubert, K.'], 'num_authors': 2}, {'year': 1962, 'authors': ['Darby, J.B.jr.', 'Lam, D.J.', 'Norton, L.J.', 'Downey, J.W.'], 'num_authors': 4}, {'year': 1925, 'authors': ['Becker, K.', 'Ebert, F.'], 'num_authors': 2}, {'year': 1959, 'authors': ['Dwight, A.E.'], 'num_authors': 1}] # noqa: E501
     """
     discovery = []
-    for pr in tqdm(provenance_results):
+    for refs in tqdm(references):
         parser = bibtex.Parser()
-        references = "".join(pr.references)
-        refs = parser.parse_string(references)
+        refs = "".join(refs)
+        refs = parser.parse_string(refs)
         entries = refs.entries
         entries_by_year = [
             (int(entry.fields["year"]), entry)
@@ -238,3 +244,10 @@ def _get_data_home(data_home=None):
     data_home = os.path.expanduser(data_home)
 
     return data_home
+
+
+# %% Code graveyard
+# slow version
+# provenance_results = [
+#     mpr.provenance.get_data_by_id(mid) for mid in tqdm(expt_material_id)
+# ]
