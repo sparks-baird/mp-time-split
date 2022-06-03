@@ -18,12 +18,16 @@ References:
 import argparse
 import logging
 import sys
+from os import path
+from urllib.request import urlretrieve
 
+import jsonpickle
 import pandas as pd
 import pybtex.errors
+from monty.io import zopen
 
 from mp_time_split import __version__
-from mp_time_split.utils.data import fetch_data
+from mp_time_split.utils.data import SNAPSHOT_NAME, _get_data_home, fetch_data
 from mp_time_split.utils.split import AVAILABLE_MODES, mp_time_split
 
 pybtex.errors.set_strict_mode(False)
@@ -90,8 +94,28 @@ class MPTimeSplit:
         self.trainval_splits, self.test_split = mp_time_split(
             self.data, n_cv_splits=len(FOLDS), mode=self.mode
         )
+        return self.data
+
+    def load(self):
+        # with urlopen("test.com/csv?date=2019-07-17") as f:
+        #     jsonl = f.read().decode('utf-8')
+        # data_home = environ.get("MP_TIME_DATA", path.dirname(path.abspath(__file__)))
+        data_path = path.join(_get_data_home(), SNAPSHOT_NAME)
+
+        url = "some_figshare_url"
+        urlretrieve(url, data_path)
+
+        with zopen(data_path, "r") as f:
+            expt_df = jsonpickle.decode(f.read())
+        self.data = expt_df
+
+        # load_dataframe_from_json(data_path)
+        # with zopen(data_path, "rb") as f:
+        #     self.data = pd.DataFrame.read_json(json.load(f))
 
     def get_train_and_val_data(self, fold, target="energy_above_hull"):
+        if self.data is None:
+            raise NameError("`fetch_data()` must be run first.")
         if fold not in FOLDS:
             raise ValueError(f"fold={fold} should be one of {FOLDS}")
         inputs = self.data.structure
@@ -107,57 +131,11 @@ class MPTimeSplit:
         return train_inputs, val_inputs, train_outputs, val_outputs
 
     def get_test_data(self):
+        if self.data is None:
+            raise NameError("`fetch_data()` must be run first.")
         return self.data.iloc[self.test_split]
 
 
-# def split(df, n_compounds, n_splits, split_type):
-#     if split_type == "TimeSeriesSplit":
-#     # TimeSeriesSplit
-#         tscv = TimeSeriesSplit(gap=0, n_splits=n_splits + 1)
-#         splits = list(tscv.split(df))
-
-#     elif split_type == "TimeSeriesOverflow":
-#         all_index = list(range(n_compounds))
-#         tscv = TimeSeriesSplit(gap=0, n_splits=n_splits + 1)
-#         train_indices = []
-#         test_indices = []
-#         for tri, _ in tscv.split(df):
-#             train_indices.append(tri)
-#         # use remainder of data rather than default `test_index`
-#             test_indices.append(np.setdiff1d(all_index, tri))
-
-#         splits = list(zip(train_indices, test_indices))
-
-#     elif split_type == "TimeKFold":
-#         kf = KFold(n_splits=n_splits + 2)
-#         splits = [indices[1] for indices in kf.split(df)]
-#         splits.pop(-1)
-
-#         running_index = np.empty(0, dtype=int)
-#         train_indices = []
-#         test_indices = []
-#         all_index = list(range(n_compounds))
-#         for s in splits:
-#             running_index = np.concatenate((running_index, s))
-#             train_indices.append(running_index)
-#             test_indices.append(np.setdiff1d(all_index, running_index))
-
-#         splits = list(zip(train_indices, test_indices))
-
-#     for train_index, test_index in splits:
-#         print("TRAIN:", train_index, "TEST:", test_index)
-
-# split(df, n_compounds, n_splits, split_type)
-# yield train_index, test_index
-
-# for train_index, test_index in kf.split(df):
-#     print("TRAIN:", train_index, "TEST:", test_index)
-
-# TODO: test size is too small, maybe swap train and test or do custom implementation
-# TODO: test size should be all remaining values probably, so could maybe just use a
-# setdiff based on train_index to overwrite the default test_index.
-
-# TimeSeriesSplit
 # ---- CLI ----
 # The functions defined in this section are wrappers around the main Python
 # API allowing them to be called directly from the terminal as a CLI
@@ -267,3 +245,46 @@ if __name__ == "__main__":
 
 # n_splits = 5
 # split_type = "TimeSeriesSplit"
+
+# def split(df, n_compounds, n_splits, split_type):
+#     if split_type == "TimeSeriesSplit":
+#     # TimeSeriesSplit
+#         tscv = TimeSeriesSplit(gap=0, n_splits=n_splits + 1)
+#         splits = list(tscv.split(df))
+
+#     elif split_type == "TimeSeriesOverflow":
+#         all_index = list(range(n_compounds))
+#         tscv = TimeSeriesSplit(gap=0, n_splits=n_splits + 1)
+#         train_indices = []
+#         test_indices = []
+#         for tri, _ in tscv.split(df):
+#             train_indices.append(tri)
+#         # use remainder of data rather than default `test_index`
+#             test_indices.append(np.setdiff1d(all_index, tri))
+
+#         splits = list(zip(train_indices, test_indices))
+
+#     elif split_type == "TimeKFold":
+#         kf = KFold(n_splits=n_splits + 2)
+#         splits = [indices[1] for indices in kf.split(df)]
+#         splits.pop(-1)
+
+#         running_index = np.empty(0, dtype=int)
+#         train_indices = []
+#         test_indices = []
+#         all_index = list(range(n_compounds))
+#         for s in splits:
+#             running_index = np.concatenate((running_index, s))
+#             train_indices.append(running_index)
+#             test_indices.append(np.setdiff1d(all_index, running_index))
+
+#         splits = list(zip(train_indices, test_indices))
+
+#     for train_index, test_index in splits:
+#         print("TRAIN:", train_index, "TEST:", test_index)
+
+# split(df, n_compounds, n_splits, split_type)
+# yield train_index, test_index
+
+# for train_index, test_index in kf.split(df):
+#     print("TRAIN:", train_index, "TEST:", test_index)
