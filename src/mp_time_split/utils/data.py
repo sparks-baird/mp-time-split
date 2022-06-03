@@ -146,11 +146,13 @@ def fetch_data(
             expt_df["provenance"] = provenance_results
 
             # extract earliest ICSD year
+            references = [pr.references for pr in provenance_results]
             discovery = _get_discovery_dict(provenance_results)
             year = [disc["year"] for disc in discovery]
-            expt_df["references"] = [pr.references for pr in provenance_results]
-            expt_df["discovery"] = discovery
-            expt_df["year"] = year
+            # https://stackoverflow.com/a/35387129/13697228
+            expt_df = expt_df.assign(
+                references=references, discovery=discovery, year=year
+            )
 
             expt_df = expt_df.sort_values(by=["year"])
 
