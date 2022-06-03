@@ -18,12 +18,16 @@ References:
 import argparse
 import logging
 import sys
+from os import path
+from urllib.request import urlretrieve
 
+import jsonpickle
 import pandas as pd
 import pybtex.errors
+from monty.io import zopen
 
 from mp_time_split import __version__
-from mp_time_split.utils.data import fetch_data
+from mp_time_split.utils.data import SNAPSHOT_NAME, _get_data_home, fetch_data
 from mp_time_split.utils.split import AVAILABLE_MODES, mp_time_split
 
 pybtex.errors.set_strict_mode(False)
@@ -61,26 +65,28 @@ FOLDS = [0, 1, 2, 3, 4]
 class MPTimeSplit:
     def __init__(
         self,
-        nsites=None,
+        num_sites=None,
         elements=None,
         use_theoretical=False,
         mode="TimeSeriesSplit",
+        target="energy_above_hull",
     ) -> None:
         if mode not in AVAILABLE_MODES:
             raise NotImplementedError(
                 f"mode={mode} not implemented. Use one of {AVAILABLE_MODES}"
             )
 
-        self.nsites = nsites
+        self.num_sites = num_sites
         self.elements = elements
         self.use_theoretical = use_theoretical
         self.mode = mode
-
         self.folds = FOLDS
+
+        self.target = target
 
     def fetch_data(self):
         self.data = fetch_data(
-            nsites=self.nsites,
+            num_sites=self.num_sites,
             elements=self.elements,
             use_theoretical=self.use_theoretical,
         )
@@ -90,74 +96,52 @@ class MPTimeSplit:
         self.trainval_splits, self.test_split = mp_time_split(
             self.data, n_cv_splits=len(FOLDS), mode=self.mode
         )
+        self.inputs = self.data.structure
+        self.outputs = getattr(self.data, self.target)
+        return self.data
 
-    def get_train_and_val_data(self, fold, target="energy_above_hull"):
+    def load(self):
+        # with urlopen("test.com/csv?date=2019-07-17") as f:
+        #     jsonl = f.read().decode('utf-8')
+        # data_home = environ.get("MP_TIME_DATA", path.dirname(path.abspath(__file__)))
+        data_path = path.join(_get_data_home(), SNAPSHOT_NAME)
+
+        url = "some_figshare_url"
+        urlretrieve(url, data_path)
+
+        with zopen(data_path, "r") as f:
+            expt_df = jsonpickle.decode(f.read())
+        self.data = expt_df
+        self.inputs = self.data.structure
+        self.outputs = getattr(self.data, self.target)
+
+        return self.data
+
+    def get_train_and_val_data(self, fold):
+        if self.data is None:
+            raise NameError("`fetch_data()` must be run first.")
         if fold not in FOLDS:
             raise ValueError(f"fold={fold} should be one of {FOLDS}")
-        inputs = self.data.structure
-        outputs = getattr(self.data, target)
 
         # self.y = self.data[]
         train_inputs, val_inputs = [
-            inputs.iloc[self.trainval_splits[fold][i]] for i in [0, 1]
+            self.inputs.iloc[tvs] for tvs in self.trainval_splits[fold]
         ]
         train_outputs, val_outputs = [
-            outputs.iloc[self.trainval_splits[fold][i]] for i in [0, 1]
+            self.outputs.iloc[tvs] for tvs in self.trainval_splits[fold]
         ]
         return train_inputs, val_inputs, train_outputs, val_outputs
 
     def get_test_data(self):
-        return self.data.iloc[self.test_split]
+        if self.data is None:
+            raise NameError("`fetch_data()` must be run first.")
+
+        train_inputs, test_inputs = [self.inputs.iloc[ts] for ts in self.test_split]
+        train_outputs, test_outputs = [self.outputs.iloc[ts] for ts in self.test_split]
+
+        return train_inputs, test_inputs, train_outputs, test_outputs
 
 
-# def split(df, n_compounds, n_splits, split_type):
-#     if split_type == "TimeSeriesSplit":
-#     # TimeSeriesSplit
-#         tscv = TimeSeriesSplit(gap=0, n_splits=n_splits + 1)
-#         splits = list(tscv.split(df))
-
-#     elif split_type == "TimeSeriesOverflow":
-#         all_index = list(range(n_compounds))
-#         tscv = TimeSeriesSplit(gap=0, n_splits=n_splits + 1)
-#         train_indices = []
-#         test_indices = []
-#         for tri, _ in tscv.split(df):
-#             train_indices.append(tri)
-#         # use remainder of data rather than default `test_index`
-#             test_indices.append(np.setdiff1d(all_index, tri))
-
-#         splits = list(zip(train_indices, test_indices))
-
-#     elif split_type == "TimeKFold":
-#         kf = KFold(n_splits=n_splits + 2)
-#         splits = [indices[1] for indices in kf.split(df)]
-#         splits.pop(-1)
-
-#         running_index = np.empty(0, dtype=int)
-#         train_indices = []
-#         test_indices = []
-#         all_index = list(range(n_compounds))
-#         for s in splits:
-#             running_index = np.concatenate((running_index, s))
-#             train_indices.append(running_index)
-#             test_indices.append(np.setdiff1d(all_index, running_index))
-
-#         splits = list(zip(train_indices, test_indices))
-
-#     for train_index, test_index in splits:
-#         print("TRAIN:", train_index, "TEST:", test_index)
-
-# split(df, n_compounds, n_splits, split_type)
-# yield train_index, test_index
-
-# for train_index, test_index in kf.split(df):
-#     print("TRAIN:", train_index, "TEST:", test_index)
-
-# TODO: test size is too small, maybe swap train and test or do custom implementation
-# TODO: test size should be all remaining values probably, so could maybe just use a
-# setdiff based on train_index to overwrite the default test_index.
-
-# TimeSeriesSplit
 # ---- CLI ----
 # The functions defined in this section are wrappers around the main Python
 # API allowing them to be called directly from the terminal as a CLI
@@ -267,3 +251,50 @@ if __name__ == "__main__":
 
 # n_splits = 5
 # split_type = "TimeSeriesSplit"
+
+# def split(df, n_compounds, n_splits, split_type):
+#     if split_type == "TimeSeriesSplit":
+#     # TimeSeriesSplit
+#         tscv = TimeSeriesSplit(gap=0, n_splits=n_splits + 1)
+#         splits = list(tscv.split(df))
+
+#     elif split_type == "TimeSeriesOverflow":
+#         all_index = list(range(n_compounds))
+#         tscv = TimeSeriesSplit(gap=0, n_splits=n_splits + 1)
+#         train_indices = []
+#         test_indices = []
+#         for tri, _ in tscv.split(df):
+#             train_indices.append(tri)
+#         # use remainder of data rather than default `test_index`
+#             test_indices.append(np.setdiff1d(all_index, tri))
+
+#         splits = list(zip(train_indices, test_indices))
+
+#     elif split_type == "TimeKFold":
+#         kf = KFold(n_splits=n_splits + 2)
+#         splits = [indices[1] for indices in kf.split(df)]
+#         splits.pop(-1)
+
+#         running_index = np.empty(0, dtype=int)
+#         train_indices = []
+#         test_indices = []
+#         all_index = list(range(n_compounds))
+#         for s in splits:
+#             running_index = np.concatenate((running_index, s))
+#             train_indices.append(running_index)
+#             test_indices.append(np.setdiff1d(all_index, running_index))
+
+#         splits = list(zip(train_indices, test_indices))
+
+#     for train_index, test_index in splits:
+#         print("TRAIN:", train_index, "TEST:", test_index)
+
+# split(df, n_compounds, n_splits, split_type)
+# yield train_index, test_index
+
+# for train_index, test_index in kf.split(df):
+#     print("TRAIN:", train_index, "TEST:", test_index)
+
+# load_dataframe_from_json(data_path)
+# with zopen(data_path, "rb") as f:
+#     self.data = pd.DataFrame.read_json(json.load(f))

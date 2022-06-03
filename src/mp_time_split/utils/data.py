@@ -1,3 +1,4 @@
+import os
 import re
 from typing import List, Optional, Tuple, Union
 
@@ -11,6 +12,9 @@ from tqdm import tqdm
 
 pybtex.errors.set_strict_mode(False)
 
+SNAPSHOT_NAME = "mp_time_summary.json"
+DUMMY_SNAPSHOT_NAME = "mp_dummy_time_summary.json"
+
 
 def fetch_data(
     api_key: Union[str, DEFAULT_API_KEY] = DEFAULT_API_KEY,
@@ -21,7 +25,7 @@ def fetch_data(
         "energy_above_hull",
         "formation_energy_per_atom",
     ],
-    nsites: Optional[Tuple[int, int]] = None,
+    num_sites: Optional[Tuple[int, int]] = None,
     elements: Optional[List[str]] = None,
     use_theoretical: bool = False,
     return_both_if_experimental: bool = False,
@@ -53,7 +57,7 @@ def fetch_data(
         retrieve the documents. See the :func:`MPRester().summary.available_fields`
         property to see a list of fields to choose from. By default:
         ``["structure", "material_id", "theoretical"]``.
-    nsites : Tuple[int, int]
+    num_sites : Tuple[int, int]
         Tuple of min and max number of sites used as filtering criteria, e.g. ``(1,
         52)`` meaning at least ``1`` and no more than ``52`` sites. If ``None`` then no
         compounds with any number of sites are allowed. By default None.
@@ -88,20 +92,20 @@ def fetch_data(
     Examples
     --------
     >>> api_key = "abc123def456"
-    >>> nsites = (1, 52)
+    >>> num_sites = (1, 52)
     >>> elements = ["V"]
-    >>> expt_df = retrieve_data(api_key, nsites=nsites, elements=elements)
+    >>> expt_df = retrieve_data(api_key, num_sites=num_sites, elements=elements)
 
     >>> df = retrieve_data(
             api_key,
-            nsites=nsites,
+            num_sites=num_sites,
             elements=elements,
             use_theoretical=True
         )
 
     >>> expt_df, df = retrieve_data(
             api_key,
-            nsites=nsites,
+            num_sites=num_sites,
             elements=elements,
             use_theoretical=False,
             return_both_if_experimental
@@ -115,7 +119,7 @@ def fetch_data(
 
     with MPRester(api_key) as mpr:
         results = mpr.summary.search(
-            nsites=nsites, elements=elements, fields=fields, **search_kwargs
+            num_sites=num_sites, elements=elements, fields=fields, **search_kwargs
         )
 
         if fields is not None:
@@ -142,10 +146,13 @@ def fetch_data(
             expt_df["provenance"] = provenance_results
 
             # extract earliest ICSD year
+            references = [pr.references for pr in provenance_results]
             discovery = _get_discovery_dict(provenance_results)
             year = [disc["year"] for disc in discovery]
-            expt_df["discovery"] = discovery
-            expt_df["year"] = year
+            # https://stackoverflow.com/a/35387129/13697228
+            expt_df = expt_df.assign(
+                references=references, discovery=discovery, year=year
+            )
 
             expt_df = expt_df.sort_values(by=["year"])
 
@@ -178,7 +185,7 @@ def _get_discovery_dict(provenance_results: List[ProvenanceDoc]) -> List[dict]:
     Examples
     --------
     >>> with MPRester(api_key) as mpr:
-    ...     provenance_results = mpr.provenance.search(nsites=(1, 4), elements=["V"])
+    ...     provenance_results = mpr.provenance.search(num_sites=(1, 4), elements=["V"])
     >>> discovery = get_discovery_dict(provenance_results)
     [{'year': 1963, 'authors': ['Raub, E.', 'Fritzsche, W.'], 'num_authors': 2}, {'year': 1925, 'authors': ['Becker, K.', 'Ebert, F.'], 'num_authors': 2}, {'year': 1965, 'authors': ['Giessen, B.C.', 'Grant, N.J.'], 'num_authors': 2}, {'year': 1957, 'authors': ['Philip, T.V.', 'Beck, P.A.'], 'num_authors': 2}, {'year': 1963, 'authors': ['Darby, J.B.jr.'], 'num_authors': 1}, {'year': 1977, 'authors': ['Aksenova, T.V.', 'Kuprina, V.V.', 'Bernard, V.B.', 'Skolozdra, R.V.'], 'num_authors': 4}, {'year': 1964, 'authors': ['Maldonado, A.', 'Schubert, K.'], 'num_authors': 2}, {'year': 1962, 'authors': ['Darby, J.B.jr.', 'Lam, D.J.', 'Norton, L.J.', 'Downey, J.W.'], 'num_authors': 4}, {'year': 1925, 'authors': ['Becker, K.', 'Ebert, F.'], 'num_authors': 2}, {'year': 1959, 'authors': ['Dwight, A.E.'], 'num_authors': 1}] # noqa: E501
     """
@@ -205,3 +212,29 @@ def _get_discovery_dict(provenance_results: List[ProvenanceDoc]) -> List[dict]:
         else:
             discovery.append(dict(year=None, authors=None, num_authors=None))
     return discovery
+
+
+def _get_data_home(data_home=None):
+    """
+    Selects the home directory to look for datasets, if the specified home
+    directory doesn't exist the directory structure is built
+
+    Modified from source:
+    https://github.com/hackingmaterials/matminer/blob/76a529b769055c729d62f11a419d319d8e2f838e/matminer/datasets/utils.py#L26-L43 # noqa:E501
+
+    Args:
+        data_home (str): folder to look in, if None a default is selected
+
+    Returns (str)
+    """
+
+    # If user doesn't specify a dataset directory: first check for env var,
+    # then default to the "matminer/datasets/" package folder
+    if data_home is None:
+        data_home = os.environ.get(
+            "MP_TIME_DATA", os.path.dirname(os.path.abspath(__file__))
+        )
+
+    data_home = os.path.expanduser(data_home)
+
+    return data_home
