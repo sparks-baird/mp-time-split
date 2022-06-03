@@ -2,7 +2,7 @@ from mp_time_split.core import MPTimeSplit
 
 
 def test_get_train_and_val_data():
-    mpt = MPTimeSplit(nsites=(1, 2), elements=["V"])
+    mpt = MPTimeSplit(num_sites=(1, 2), elements=["V"])
     mpt.fetch_data()
     train_inputs = []
     val_inputs = []
@@ -20,7 +20,7 @@ def test_get_train_and_val_data():
 
 
 def test_get_test_data():
-    mpt = MPTimeSplit(nsites=(1, 2), elements=["V"])
+    mpt = MPTimeSplit(num_sites=(1, 2), elements=["V"])
     mpt.fetch_data()
     train_inputs, test_inputs, train_outputs, test_outputs = mpt.get_test_data()
     return train_inputs, test_inputs, train_outputs, test_outputs

@@ -65,7 +65,7 @@ FOLDS = [0, 1, 2, 3, 4]
 class MPTimeSplit:
     def __init__(
         self,
-        nsites=None,
+        num_sites=None,
         elements=None,
         use_theoretical=False,
         mode="TimeSeriesSplit",
@@ -76,7 +76,7 @@ class MPTimeSplit:
                 f"mode={mode} not implemented. Use one of {AVAILABLE_MODES}"
             )
 
-        self.nsites = nsites
+        self.num_sites = num_sites
         self.elements = elements
         self.use_theoretical = use_theoretical
         self.mode = mode
@@ -86,7 +86,7 @@ class MPTimeSplit:
 
     def fetch_data(self):
         self.data = fetch_data(
-            nsites=self.nsites,
+            num_sites=self.num_sites,
             elements=self.elements,
             use_theoretical=self.use_theoretical,
         )
