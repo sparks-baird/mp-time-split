@@ -29,4 +29,4 @@ def test_get_test_data():
 if __name__ == "__main__":
     train_inputs, val_inputs, train_outputs, val_outputs = test_get_train_and_val_data()
     train_inputs, test_inputs, train_outputs, test_outputs = test_get_test_data()
-    1 + 1
+    train_inputs
