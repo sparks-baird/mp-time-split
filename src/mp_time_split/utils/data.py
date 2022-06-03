@@ -143,15 +143,15 @@ def fetch_data(
             provenance_results = mpr.provenance.search(
                 fields=["references", "material_id"]
             )
-            provenance_ids = [pr.material_id for pr in provenance_results]
+            provenance_ids = [fpr.material_id for fpr in provenance_results]
             prov_df = pd.Series(
                 name="provenance", data=provenance_results, index=provenance_ids
             )
-            prov_df.loc[expt_material_id]
-            expt_df["provenance"] = provenance_results
+            expt_provenance_results = prov_df.loc[expt_material_id]
+            expt_df["provenance"] = expt_provenance_results
 
             # extract earliest ICSD year
-            references = [pr.references for pr in provenance_results]
+            references = [pr.references for pr in expt_provenance_results]
             discovery = _get_discovery_dict(references)
             year = [disc["year"] for disc in discovery]
             # https://stackoverflow.com/a/35387129/13697228
