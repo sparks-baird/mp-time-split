@@ -1,3 +1,4 @@
+import os
 import re
 from typing import List, Optional, Tuple, Union
 
@@ -10,6 +11,8 @@ from pybtex.database.input import bibtex
 from tqdm import tqdm
 
 pybtex.errors.set_strict_mode(False)
+
+SNAPSHOT_NAME = "mp_time_summary.json"
 
 
 def fetch_data(
@@ -144,6 +147,7 @@ def fetch_data(
             # extract earliest ICSD year
             discovery = _get_discovery_dict(provenance_results)
             year = [disc["year"] for disc in discovery]
+            expt_df["references"] = [pr.references for pr in provenance_results]
             expt_df["discovery"] = discovery
             expt_df["year"] = year
 
@@ -205,3 +209,29 @@ def _get_discovery_dict(provenance_results: List[ProvenanceDoc]) -> List[dict]:
         else:
             discovery.append(dict(year=None, authors=None, num_authors=None))
     return discovery
+
+
+def _get_data_home(data_home=None):
+    """
+    Selects the home directory to look for datasets, if the specified home
+    directory doesn't exist the directory structure is built
+
+    Modified from source:
+    https://github.com/hackingmaterials/matminer/blob/76a529b769055c729d62f11a419d319d8e2f838e/matminer/datasets/utils.py#L26-L43 # noqa:E501
+
+    Args:
+        data_home (str): folder to look in, if None a default is selected
+
+    Returns (str)
+    """
+
+    # If user doesn't specify a dataset directory: first check for env var,
+    # then default to the "matminer/datasets/" package folder
+    if data_home is None:
+        data_home = os.environ.get(
+            "MP_TIME_DATA", os.path.dirname(os.path.abspath(__file__))
+        )
+
+    data_home = os.path.expanduser(data_home)
+
+    return data_home
