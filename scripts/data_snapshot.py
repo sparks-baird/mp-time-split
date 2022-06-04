@@ -11,7 +11,7 @@ dummy_expt_df = mpt.fetch_data(one_by_one=True)
 dummy_data_path = path.join(get_data_home(), DUMMY_SNAPSHOT_NAME)
 
 store_dataframe_as_json(dummy_expt_df, dummy_data_path, compression=None)
-store_dataframe_as_json(dummy_expt_df, dummy_data_path, compression="gz")
+store_dataframe_as_json(dummy_expt_df, dummy_data_path + ".gz", compression="gz")
 
 dummy_expt_df_check = load_dataframe_from_json(dummy_data_path)
 
@@ -24,7 +24,7 @@ mpt = MPTimeSplit(num_sites=(1, 52))
 expt_df = mpt.fetch_data()
 data_path = path.join(get_data_home(), SNAPSHOT_NAME)
 store_dataframe_as_json(expt_df, data_path, compression=None)
-store_dataframe_as_json(expt_df, data_path, compression="gz")
+store_dataframe_as_json(expt_df, data_path + ".gz", compression="gz")
 expt_df_check = load_dataframe_from_json(dummy_data_path)
 
 match = dummy_expt_df.compare(dummy_expt_df_check)
