@@ -7,6 +7,8 @@ from mp_time_split.core import MPTimeSplit
 from mp_time_split.utils.data import DUMMY_SNAPSHOT_NAME, _get_data_home
 
 jsonpickle_pandas.register_handlers()
+# https://stackoverflow.com/a/4359298/13697228
+# jsonpickle.set_encoder_options("json", sort_keys=True, indent=4)
 # %% dummy data
 mpt = MPTimeSplit(num_sites=(1, 2), elements=["V"])
 dummy_expt_df = mpt.fetch_data()
