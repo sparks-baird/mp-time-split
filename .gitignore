@@ -53,3 +53,4 @@ MANIFEST
 .conda*/
 .python-version
 pytest.ini
+src/mp_time_split/utils/mp_time_summary.json

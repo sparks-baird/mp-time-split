@@ -31,8 +31,8 @@ from mp_time_split import __version__
 from mp_time_split.utils.data import (
     DUMMY_SNAPSHOT_NAME,
     SNAPSHOT_NAME,
-    _get_data_home,
     fetch_data,
+    get_data_home,
 )
 from mp_time_split.utils.split import AVAILABLE_MODES, mp_time_split
 
@@ -90,11 +90,12 @@ class MPTimeSplit:
 
         self.target = target
 
-    def fetch_data(self):
+    def fetch_data(self, one_by_one=False):
         self.data = fetch_data(
             num_sites=self.num_sites,
             elements=self.elements,
             use_theoretical=self.use_theoretical,
+            one_by_one=one_by_one,
         )
         if not isinstance(self.data, pd.DataFrame):
             raise ValueError("`self.data` is not a `pd.DataFrame`")
@@ -111,7 +112,7 @@ class MPTimeSplit:
         #     jsonl = f.read().decode('utf-8')
         # data_home = environ.get("MP_TIME_DATA", path.dirname(path.abspath(__file__)))
         name = SNAPSHOT_NAME if not dummy else DUMMY_SNAPSHOT_NAME
-        data_path = path.join(_get_data_home(), name)
+        data_path = path.join(get_data_home(), name)
 
         if dummy and url is None and checksum is None:
             url = "https://figshare.com/ndownloader/files/35585837"
