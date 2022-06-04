@@ -23,9 +23,9 @@ from os import path
 from pathlib import Path
 from urllib.request import urlretrieve
 
-import jsonpickle
 import pandas as pd
 import pybtex.errors
+from matminer.utils.io import load_dataframe_from_json
 
 from mp_time_split import __version__
 from mp_time_split.utils.data import (
@@ -115,9 +115,11 @@ class MPTimeSplit:
         data_path = path.join(get_data_home(), name)
 
         if dummy and url is None and checksum is None:
+            # dummy data from figshare for testing
             url = "https://figshare.com/ndownloader/files/35585837"
             checksum_frozen = "b818585f743470e43508acc86cd35c88"
         elif not dummy and url is not None and checksum is not None:
+            # full dataset from figshare for production
             url = "full_dataset_figshare_url"
             checksum_frozen = "full_dataset_checksum"
         else:
@@ -131,8 +133,7 @@ class MPTimeSplit:
                 f"checksum from {url} ({checksum}) does not match what was expected {checksum_frozen})"  # noqa: E501
             )
 
-        with open(data_path, "r") as f:
-            expt_df = jsonpickle.decode(f.read())
+        expt_df = load_dataframe_from_json(data_path)
         self.data = expt_df
         self.inputs = self.data.structure
         self.outputs = getattr(self.data, self.target)
@@ -327,3 +328,6 @@ if __name__ == "__main__":
 # with urlopen("test.com/csv?date=2019-07-17") as f:
 #     jsonl = f.read().decode('utf-8')
 # data_home = environ.get("MP_TIME_DATA", path.dirname(path.abspath(__file__)))
+
+# with open(data_path, "r") as f:
+#     expt_df = jsonpickle.decode(f.read())
