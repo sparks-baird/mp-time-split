@@ -108,20 +108,17 @@ class MPTimeSplit:
         return self.data
 
     def load(self, url=None, checksum=None, dummy=False):
-        # with urlopen("test.com/csv?date=2019-07-17") as f:
-        #     jsonl = f.read().decode('utf-8')
-        # data_home = environ.get("MP_TIME_DATA", path.dirname(path.abspath(__file__)))
         name = SNAPSHOT_NAME if not dummy else DUMMY_SNAPSHOT_NAME
         data_path = path.join(get_data_home(), name)
 
         if dummy and url is None and checksum is None:
             # dummy data from figshare for testing
-            url = "https://figshare.com/ndownloader/files/35585837"
-            checksum_frozen = "b818585f743470e43508acc86cd35c88"
+            url = "https://figshare.com/ndownloader/files/35592005"
+            checksum_frozen = "6bf42266bd71477a06b24153d4ff7889"
         elif not dummy and url is not None and checksum is not None:
             # full dataset from figshare for production
-            url = "full_dataset_figshare_url"
-            checksum_frozen = "full_dataset_checksum"
+            url = "https://figshare.com/ndownloader/files/35592011"
+            checksum_frozen = "57da7fa4d96ffbbc0dd359b1b7423f31"
         else:
             checksum_frozen = None
 
