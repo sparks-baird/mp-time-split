@@ -3,12 +3,12 @@ from os import path
 from matminer.utils.io import load_dataframe_from_json, store_dataframe_as_json
 
 from mp_time_split.core import MPTimeSplit
-from mp_time_split.utils.data import DUMMY_SNAPSHOT_NAME, SNAPSHOT_NAME, _get_data_home
+from mp_time_split.utils.data import DUMMY_SNAPSHOT_NAME, SNAPSHOT_NAME, get_data_home
 
 # %% dummy data
 mpt = MPTimeSplit(num_sites=(1, 2), elements=["V"])
 dummy_expt_df = mpt.fetch_data(one_by_one=True)
-dummy_data_path = path.join(_get_data_home(), DUMMY_SNAPSHOT_NAME)
+dummy_data_path = path.join(get_data_home(), DUMMY_SNAPSHOT_NAME)
 
 store_dataframe_as_json(dummy_expt_df, dummy_data_path)
 
@@ -21,7 +21,7 @@ if not dummy_match.empty:
 # %% full data
 mpt = MPTimeSplit(num_sites=(1, 52))
 expt_df = mpt.fetch_data()
-data_path = path.join(_get_data_home(), SNAPSHOT_NAME)
+data_path = path.join(get_data_home(), SNAPSHOT_NAME)
 store_dataframe_as_json(expt_df, data_path)
 expt_df_check = load_dataframe_from_json(dummy_data_path)
 

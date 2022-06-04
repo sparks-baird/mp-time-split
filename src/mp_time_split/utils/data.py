@@ -131,7 +131,10 @@ def fetch_data(
 
         material_id = [str(fd["material_id"]) for fd in field_data]
 
-        index = [int(mid.replace("mp-", "")) for mid in material_id]
+        # mvc values get distinguished by a negative sign
+        index = [
+            int(mid.replace("mp-", "").replace("mvc-", "-")) for mid in material_id
+        ]
         df = pd.DataFrame(field_data, index=index)
         df = df.sort_index()
 
@@ -230,7 +233,7 @@ def _get_discovery_dict(references: List[dict]) -> List[dict]:
     return discovery
 
 
-def _get_data_home(data_home=None):
+def get_data_home(data_home=None):
     """
     Selects the home directory to look for datasets, if the specified home
     directory doesn't exist the directory structure is built
