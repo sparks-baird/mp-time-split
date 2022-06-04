@@ -319,3 +319,10 @@ if __name__ == "__main__":
 # load_dataframe_from_json(data_path)
 # with zopen(data_path, "rb") as f:
 #     self.data = pd.DataFrame.read_json(json.load(f))
+
+# with zopen(data_path, "r") as f:
+#     expt_df = jsonpickle.decode(f.read())
+
+# with urlopen("test.com/csv?date=2019-07-17") as f:
+#     jsonl = f.read().decode('utf-8')
+# data_home = environ.get("MP_TIME_DATA", path.dirname(path.abspath(__file__)))
