@@ -28,6 +28,7 @@ def fetch_data(
     elements: Optional[List[str]] = None,
     use_theoretical: bool = False,
     return_both_if_experimental: bool = False,
+    one_by_one: bool = False,
     **search_kwargs,
 ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
     """Retrieve MP data sorted by MPID (theoretical+exptl) or pub year (exptl).
@@ -128,7 +129,7 @@ def fetch_data(
         else:
             field_data = results
 
-        material_id = [fd["material_id"] for fd in field_data]
+        material_id = [str(fd["material_id"]) for fd in field_data]
 
         index = [int(mid.replace("mp-", "")) for mid in material_id]
         df = pd.DataFrame(field_data, index=index)
@@ -139,16 +140,25 @@ def fetch_data(
             # if latter, `expt_df.material_id.apply(str).tolist()`
             expt_df = df.query("theoretical == False")
             expt_material_id = expt_df.material_id.tolist()
-            # https://github.com/materialsproject/api/issues/613
-            provenance_results = mpr.provenance.search(
-                fields=["references", "material_id"]
-            )
-            provenance_ids = [fpr.material_id for fpr in provenance_results]
-            prov_df = pd.Series(
-                name="provenance", data=provenance_results, index=provenance_ids
-            )
-            expt_provenance_results = prov_df.loc[expt_material_id]
-            expt_df["provenance"] = expt_provenance_results
+
+            if not one_by_one:
+                # https://github.com/materialsproject/api/issues/613
+                provenance_results = mpr.provenance.search(
+                    fields=["references", "material_id"]
+                )
+                provenance_ids = [fpr.material_id for fpr in provenance_results]
+                prov_df = pd.Series(
+                    name="provenance", data=provenance_results, index=provenance_ids
+                )
+                expt_provenance_results = prov_df.loc[expt_material_id]
+            else:
+                # slow version
+                expt_provenance_results = [
+                    mpr.provenance.get_data_by_id(mid) for mid in tqdm(expt_material_id)
+                ]
+            # CrystalSystem not JSON serializable, see
+            # https://github.com/materialsproject/api/issues/615
+            # expt_df["provenance"] = expt_provenance_results
 
             # extract earliest ICSD year
             references = [pr.references for pr in expt_provenance_results]
@@ -246,8 +256,14 @@ def _get_data_home(data_home=None):
     return data_home
 
 
+# def encode_dataframe(df):
+#     jsonpickle_pandas.register_handlers()
+#     return jsonpickle.encode(df)
+
+
+# def decode_dataframe_from_string(string):
+#     jsonpickle_pandas.register_handlers()
+#     return jsonpickle.decode(string, classes=[Structure])
+
+
 # %% Code graveyard
-# slow version
-# provenance_results = [
-#     mpr.provenance.get_data_by_id(mid) for mid in tqdm(expt_material_id)
-# ]

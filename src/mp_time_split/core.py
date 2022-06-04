@@ -84,11 +84,12 @@ class MPTimeSplit:
 
         self.target = target
 
-    def fetch_data(self):
+    def fetch_data(self, one_by_one=False):
         self.data = fetch_data(
             num_sites=self.num_sites,
             elements=self.elements,
             use_theoretical=self.use_theoretical,
+            one_by_one=one_by_one,
         )
         if not isinstance(self.data, pd.DataFrame):
             raise ValueError("`self.data` is not a `pd.DataFrame`")
