@@ -13,7 +13,11 @@
 
 > Create time-splits for Materials Project entries.
 
-A longer description of your project goes here...
+While methods for cross-validating accuracy of materials informatics models is well
+estabilished (see for example [Matbench](https://matbench.materialsproject.org/)),
+evaluating the performance of generative models such as
+[FTCP](https://github.com/PV-Lab/FTCP) or
+[imatgen](https://github.com/kaist-amsg/imatgen), and [many others](https://github.com/stars/sgbaird/lists/materials-generative-models).
 
 ## Installation
 
