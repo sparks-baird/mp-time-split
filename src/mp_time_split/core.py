@@ -27,7 +27,7 @@ import pybtex.errors
 from monty.io import zopen
 
 from mp_time_split import __version__
-from mp_time_split.utils.data import SNAPSHOT_NAME, _get_data_home, fetch_data
+from mp_time_split.utils.data import SNAPSHOT_NAME, fetch_data, get_data_home
 from mp_time_split.utils.split import AVAILABLE_MODES, mp_time_split
 
 pybtex.errors.set_strict_mode(False)
@@ -84,11 +84,12 @@ class MPTimeSplit:
 
         self.target = target
 
-    def fetch_data(self):
+    def fetch_data(self, one_by_one=False):
         self.data = fetch_data(
             num_sites=self.num_sites,
             elements=self.elements,
             use_theoretical=self.use_theoretical,
+            one_by_one=one_by_one,
         )
         if not isinstance(self.data, pd.DataFrame):
             raise ValueError("`self.data` is not a `pd.DataFrame`")
@@ -104,7 +105,7 @@ class MPTimeSplit:
         # with urlopen("test.com/csv?date=2019-07-17") as f:
         #     jsonl = f.read().decode('utf-8')
         # data_home = environ.get("MP_TIME_DATA", path.dirname(path.abspath(__file__)))
-        data_path = path.join(_get_data_home(), SNAPSHOT_NAME)
+        data_path = path.join(get_data_home(), SNAPSHOT_NAME)
 
         url = "some_figshare_url"
         urlretrieve(url, data_path)
