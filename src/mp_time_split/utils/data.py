@@ -11,8 +11,8 @@ from tqdm import tqdm
 
 pybtex.errors.set_strict_mode(False)
 
-SNAPSHOT_NAME = "mp_time_summary.json.gz"
-DUMMY_SNAPSHOT_NAME = "mp_dummy_time_summary.json.gz"
+SNAPSHOT_NAME = "mp_time_summary.json"
+DUMMY_SNAPSHOT_NAME = "mp_dummy_time_summary.json"
 
 
 def fetch_data(

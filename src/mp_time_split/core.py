@@ -109,6 +109,7 @@ class MPTimeSplit:
 
     def load(self, url=None, checksum=None, dummy=False):
         name = SNAPSHOT_NAME if not dummy else DUMMY_SNAPSHOT_NAME
+        name = name + ".gz"
         data_path = path.join(get_data_home(), name)
 
         if dummy and url is None and checksum is None:
