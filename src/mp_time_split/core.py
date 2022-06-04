@@ -18,16 +18,22 @@ References:
 import argparse
 import logging
 import sys
+from hashlib import md5
 from os import path
+from pathlib import Path
 from urllib.request import urlretrieve
 
-import jsonpickle
 import pandas as pd
 import pybtex.errors
-from monty.io import zopen
+from matminer.utils.io import load_dataframe_from_json
 
 from mp_time_split import __version__
-from mp_time_split.utils.data import SNAPSHOT_NAME, fetch_data, get_data_home
+from mp_time_split.utils.data import (
+    DUMMY_SNAPSHOT_NAME,
+    SNAPSHOT_NAME,
+    fetch_data,
+    get_data_home,
+)
 from mp_time_split.utils.split import AVAILABLE_MODES, mp_time_split
 
 pybtex.errors.set_strict_mode(False)
@@ -101,17 +107,31 @@ class MPTimeSplit:
         self.outputs = getattr(self.data, self.target)
         return self.data
 
-    def load(self):
-        # with urlopen("test.com/csv?date=2019-07-17") as f:
-        #     jsonl = f.read().decode('utf-8')
-        # data_home = environ.get("MP_TIME_DATA", path.dirname(path.abspath(__file__)))
-        data_path = path.join(get_data_home(), SNAPSHOT_NAME)
+    def load(self, url=None, checksum=None, dummy=False):
+        name = SNAPSHOT_NAME if not dummy else DUMMY_SNAPSHOT_NAME
+        name = name + ".gz"
+        data_path = path.join(get_data_home(), name)
 
-        url = "some_figshare_url"
+        if dummy and url is None and checksum is None:
+            # dummy data from figshare for testing
+            url = "https://figshare.com/ndownloader/files/35592005"
+            checksum_frozen = "6bf42266bd71477a06b24153d4ff7889"
+        elif not dummy and url is not None and checksum is not None:
+            # full dataset from figshare for production
+            url = "https://figshare.com/ndownloader/files/35592011"
+            checksum_frozen = "57da7fa4d96ffbbc0dd359b1b7423f31"
+        else:
+            checksum_frozen = None
+
         urlretrieve(url, data_path)
+        checksum = md5(Path(data_path).read_bytes()).hexdigest()
 
-        with zopen(data_path, "r") as f:
-            expt_df = jsonpickle.decode(f.read())
+        if checksum_frozen is not None and checksum != checksum_frozen:
+            raise ValueError(
+                f"checksum from {url} ({checksum}) does not match what was expected {checksum_frozen})"  # noqa: E501
+            )
+
+        expt_df = load_dataframe_from_json(data_path)
         self.data = expt_df
         self.inputs = self.data.structure
         self.outputs = getattr(self.data, self.target)
@@ -299,3 +319,13 @@ if __name__ == "__main__":
 # load_dataframe_from_json(data_path)
 # with zopen(data_path, "rb") as f:
 #     self.data = pd.DataFrame.read_json(json.load(f))
+
+# with zopen(data_path, "r") as f:
+#     expt_df = jsonpickle.decode(f.read())
+
+# with urlopen("test.com/csv?date=2019-07-17") as f:
+#     jsonl = f.read().decode('utf-8')
+# data_home = environ.get("MP_TIME_DATA", path.dirname(path.abspath(__file__)))
+
+# with open(data_path, "r") as f:
+#     expt_df = jsonpickle.decode(f.read())
