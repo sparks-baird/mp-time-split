@@ -18,16 +18,22 @@ References:
 import argparse
 import logging
 import sys
+from hashlib import md5
 from os import path
+from pathlib import Path
 from urllib.request import urlretrieve
 
 import jsonpickle
 import pandas as pd
 import pybtex.errors
-from monty.io import zopen
 
 from mp_time_split import __version__
-from mp_time_split.utils.data import SNAPSHOT_NAME, _get_data_home, fetch_data
+from mp_time_split.utils.data import (
+    DUMMY_SNAPSHOT_NAME,
+    SNAPSHOT_NAME,
+    _get_data_home,
+    fetch_data,
+)
 from mp_time_split.utils.split import AVAILABLE_MODES, mp_time_split
 
 pybtex.errors.set_strict_mode(False)
@@ -100,16 +106,31 @@ class MPTimeSplit:
         self.outputs = getattr(self.data, self.target)
         return self.data
 
-    def load(self):
+    def load(self, url=None, checksum=None, dummy=False):
         # with urlopen("test.com/csv?date=2019-07-17") as f:
         #     jsonl = f.read().decode('utf-8')
         # data_home = environ.get("MP_TIME_DATA", path.dirname(path.abspath(__file__)))
-        data_path = path.join(_get_data_home(), SNAPSHOT_NAME)
+        name = SNAPSHOT_NAME if not dummy else DUMMY_SNAPSHOT_NAME
+        data_path = path.join(_get_data_home(), name)
 
-        url = "some_figshare_url"
+        if dummy and url is None and checksum is None:
+            url = "https://figshare.com/ndownloader/files/35585837"
+            checksum_frozen = "b818585f743470e43508acc86cd35c88"
+        elif not dummy and url is not None and checksum is not None:
+            url = "full_dataset_figshare_url"
+            checksum_frozen = "full_dataset_checksum"
+        else:
+            checksum_frozen = None
+
         urlretrieve(url, data_path)
+        checksum = md5(Path(data_path).read_bytes()).hexdigest()
 
-        with zopen(data_path, "r") as f:
+        if checksum_frozen is not None and checksum != checksum_frozen:
+            raise ValueError(
+                f"checksum from {url} ({checksum}) does not match what was expected {checksum_frozen})"  # noqa: E501
+            )
+
+        with open(data_path, "r") as f:
             expt_df = jsonpickle.decode(f.read())
         self.data = expt_df
         self.inputs = self.data.structure
