@@ -11,13 +11,87 @@
 
 # mp-time-split
 
-> Create time-splits for Materials Project entries.
+> Use time-splits for Materials Project entries for generative modeling benchmarking.
 
 While methods for cross-validating accuracy of materials informatics models is well
 estabilished (see for example [Matbench](https://matbench.materialsproject.org/)),
 evaluating the performance of generative models such as
 [FTCP](https://github.com/PV-Lab/FTCP) or
-[imatgen](https://github.com/kaist-amsg/imatgen), and [many others](https://github.com/stars/sgbaird/lists/materials-generative-models).
+[imatgen](https://github.com/kaist-amsg/imatgen), and [many
+others](https://github.com/stars/sgbaird/lists/materials-generative-models) is less
+straightforward. Recently, [Xie et al.](http://arxiv.org/abs/2110.06197) introduced new
+benchmark datasets and metrics in [CDVAE](https://github.com/txie-93/cdvae) for several
+state-of-the-art algorithms. This repository acts as a supplement to CDVAE benchmarks,
+delivering a new benchmark dataset (`Materials_Project_Time_Split_52` or **MPTS-52**) with time-based (5$\times$train/val)
++train/test splits suitable for cross-validated hyperparameter optimization and
+subsequent benchmarking via the test split. **MPTS-52** is most comparable to **MP-20**
+from [Xie et al.](http://arxiv.org/abs/2110.06197), with the difference that up to 52
+atoms are allowed and possibly a difference in the unique elements, as no elemental
+filtering was applied (e.g. removal of radioactive elements).
+
+## Quick Start
+### Installation
+```bash
+conda env create -n mp-time-split -c conda-forge mp-time-split
+conda activate mp-time-split
+```
+
+### Example
+```python
+from mp_time_split.core import MPTimeSplit
+
+mpt = MPTimeSplit(target="energy_above_hull")
+mpt.load(dummy=False)
+
+for fold in mpt.folds:
+    train_inputs, val_inputs, train_outputs, val_outputs = mpt.get_train_and_val_data(
+        fold
+    )
+
+final_train_inputs, test_inputs, final_train_outputs, test_outputs = mpt.get_test_data()
+```
+
+### Output
+```python
+print(train_inputs.iloc[0], train_outputs)
+```
+
+<table>
+<tr>
+<th> Original </th>
+<th> Decoded </th>
+</tr>
+<tr>
+<td>
+
+```python
+Structure Summary
+Lattice
+    abc : 2.591619125942699 2.591619125942699 2.591619125942699
+ angles : 109.47122063449069 109.47122063449069 109.47122063449069
+ volume : 13.399593956465264
+      A : -1.496272 1.496272 1.496272
+      B : 1.496272 -1.496272 1.496272
+      C : 1.496272 1.496272 -1.496272
+PeriodicSite: V (0.0000, 0.0000, 0.0000) [0.0000, 0.0000, 0.0000]
+```
+
+</td>
+<td>
+
+```python
+146      0.000000
+925      0.190105
+1282     0.087952
+1335     0.022710
+12778    0.003738
+2540     0.000000
+316      0.000000
+```
+
+</td>
+</tr>
+</table>
 
 ## Installation
 
@@ -123,3 +197,17 @@ This project has been set up using [PyScaffold] 4.2.2 and the [dsproject extensi
 [Google style]: http://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings
 [PyScaffold]: https://pyscaffold.org/
 [dsproject extension]: https://github.com/pyscaffold/pyscaffoldext-dsproject
+
+To create the same starting point for this repository, as of 2022-06-01 on Windows you will need the development versions of PyScaffold and extensions, however this will not be necessary once certain bugfixes have been introduced in the next stable releases:
+```bash
+pip install git+https://github.com/pyscaffold/pyscaffold.git git+https://github.com/pyscaffold/pyscaffoldext-dsproject.git git+https://github.com/pyscaffold/pyscaffoldext-markdown.git
+```
+
+The following `pyscaffold` command creates a starting point for this repository:
+```bash
+putup xtal2png --github-actions --markdown --dsproj
+```
+Alternatively, you can edit a file interactively and update and uncomment relevant lines, which saves some of the additional setup:
+```bash
+putup --interactive xtal2png
+```
