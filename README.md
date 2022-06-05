@@ -12,7 +12,7 @@
 
 # mp-time-split
 
-> Use time-splits for Materials Project entries for generative modeling benchmarking.
+> Use Materials Project time-splits for generative modeling benchmarking.
 
 While methods for cross-validating accuracy of materials informatics models is well
 estabilished (see for example [Matbench](https://matbench.materialsproject.org/)),
