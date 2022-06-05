@@ -66,6 +66,8 @@ def fib(n):
 
 
 FOLDS = [0, 1, 2, 3, 4]
+dummy_checksum_frozen = "6bf42266bd71477a06b24153d4ff7889"
+full_checksum_frozen = "57da7fa4d96ffbbc0dd359b1b7423f31"
 
 
 class MPTimeSplit:
@@ -107,23 +109,35 @@ class MPTimeSplit:
         self.outputs = getattr(self.data, self.target)
         return self.data
 
-    def load(self, url=None, checksum=None, dummy=False):
+    def load(self, url=None, checksum=None, dummy=False, force_download=False):
         name = SNAPSHOT_NAME if not dummy else DUMMY_SNAPSHOT_NAME
         name = name + ".gz"
         data_path = path.join(get_data_home(), name)
 
-        if dummy and url is None and checksum is None:
-            # dummy data from figshare for testing
-            url = "https://figshare.com/ndownloader/files/35592005"
-            checksum_frozen = "6bf42266bd71477a06b24153d4ff7889"
-        elif not dummy and url is not None and checksum is not None:
-            # full dataset from figshare for production
-            url = "https://figshare.com/ndownloader/files/35592011"
-            checksum_frozen = "57da7fa4d96ffbbc0dd359b1b7423f31"
-        else:
-            checksum_frozen = None
+        is_on_disk = Path(data_path).is_file()
 
-        urlretrieve(url, data_path)
+        if force_download or not is_on_disk:
+            if dummy and url is None and checksum is None:
+                # dummy data from figshare for testing
+                url = "https://figshare.com/ndownloader/files/35592005"
+                checksum_frozen = dummy_checksum_frozen
+            elif not dummy and url is None and checksum is None:
+                # full dataset from figshare for production
+                url = "https://figshare.com/ndownloader/files/35592011"
+                checksum_frozen = full_checksum_frozen
+            elif url is None:
+                raise ValueError(
+                    f"url should not be None at this point. url: {url}, type: {type(url)}"  # noqa: E501
+                )
+            else:
+                checksum_frozen = None
+
+            urlretrieve(url, data_path)
+        elif dummy:
+            checksum_frozen = dummy_checksum_frozen
+        else:
+            checksum_frozen = full_checksum_frozen
+
         checksum = md5(Path(data_path).read_bytes()).hexdigest()
 
         if checksum_frozen is not None and checksum != checksum_frozen:
@@ -133,6 +147,9 @@ class MPTimeSplit:
 
         expt_df = load_dataframe_from_json(data_path)
         self.data = expt_df
+        self.trainval_splits, self.test_split = mp_time_split(
+            self.data, n_cv_splits=len(FOLDS), mode=self.mode
+        )
         self.inputs = self.data.structure
         self.outputs = getattr(self.data, self.target)
 
