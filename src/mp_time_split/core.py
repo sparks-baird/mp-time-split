@@ -82,7 +82,9 @@ def get_data_home(data_home=None):
     # If user doesn't specify a dataset directory: first check for env var,
     # then default to the "matminer/datasets/" package folder
     if data_home is None:
-        data_home = environ.get("MP_TIME_DATA", path.dirname(path.abspath(__file__)))
+        data_home = environ.get(
+            "MP_TIME_DATA", path.dirname(path.abspath(__file__), "utils")
+        )
 
     data_home = path.expanduser(data_home)
 
