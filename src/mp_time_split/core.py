@@ -133,10 +133,8 @@ class MPTimeSplit:
                 checksum_frozen = None
 
             urlretrieve(url, data_path)
-        elif dummy:
-            checksum_frozen = dummy_checksum_frozen
         else:
-            checksum_frozen = full_checksum_frozen
+            checksum_frozen = None
 
         checksum = md5(Path(data_path).read_bytes()).hexdigest()
 
