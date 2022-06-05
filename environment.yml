@@ -16,13 +16,17 @@ dependencies:
   - ipython
   # VISUALIZATION
   - matplotlib
-  - ipympl  # interactive matplotlib plots
-  - seaborn
+  - plotly
+  - python-kaleido
+  # - ipympl  # interactive matplotlib plots
+  # - seaborn
   # - altair
   # - yellowbrick
   # ML, STATS & DEEP LEARNING
   # - statsmodels
-  # - scikit-learn
+  - scikit-learn
+  - pymatgen
+  - matminer
   # - sktime
   # - tslearn
   # - xgboost
