@@ -93,6 +93,8 @@ PeriodicSite: V (0.0000, 0.0000, 0.0000) [0.0000, 0.0000, 0.0000]
 </tr>
 </table>
 
+For additional examples, see the [notebooks](notebooks) directory.
+
 ## Installation
 
 In order to set up the necessary environment:
