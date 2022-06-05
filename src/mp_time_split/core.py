@@ -19,7 +19,7 @@ import argparse
 import logging
 import sys
 from hashlib import md5
-from os import path
+from os import environ, path
 from pathlib import Path
 from urllib.request import urlretrieve
 
@@ -28,12 +28,7 @@ import pybtex.errors
 from matminer.utils.io import load_dataframe_from_json
 
 from mp_time_split import __version__
-from mp_time_split.utils.data import (
-    DUMMY_SNAPSHOT_NAME,
-    SNAPSHOT_NAME,
-    fetch_data,
-    get_data_home,
-)
+from mp_time_split.utils.data import DUMMY_SNAPSHOT_NAME, SNAPSHOT_NAME
 from mp_time_split.utils.split import AVAILABLE_MODES, mp_time_split
 
 pybtex.errors.set_strict_mode(False)
@@ -70,6 +65,32 @@ dummy_checksum_frozen = "6bf42266bd71477a06b24153d4ff7889"
 full_checksum_frozen = "57da7fa4d96ffbbc0dd359b1b7423f31"
 
 
+def get_data_home(data_home=None):
+    """
+    Selects the home directory to look for datasets, if the specified home
+    directory doesn't exist the directory structure is built
+
+    Modified from source:
+    https://github.com/hackingmaterials/matminer/blob/76a529b769055c729d62f11a419d319d8e2f838e/matminer/datasets/utils.py#L26-L43 # noqa:E501
+
+    Args:
+        data_home (str): folder to look in, if None a default is selected
+
+    Returns (str)
+    """
+
+    # If user doesn't specify a dataset directory: first check for env var,
+    # then default to the "matminer/datasets/" package folder
+    if data_home is None:
+        data_home = environ.get(
+            "MP_TIME_DATA", path.join(path.dirname(path.abspath(__file__)), "utils")
+        )
+
+    data_home = path.expanduser(data_home)
+
+    return data_home
+
+
 class MPTimeSplit:
     def __init__(
         self,
@@ -93,6 +114,14 @@ class MPTimeSplit:
         self.target = target
 
     def fetch_data(self, one_by_one=False):
+        try:
+            from mp_time_split.utils.api import fetch_data
+        except ImportError as e:
+            print(e)
+            print(
+                "Failed to import `fetch_data()`. Try `pip install mp_time_split[api]` or `pip install mp-api` to install the optional `mp-api` dependency. Note that this requires Python >=3.8"  # noqa: E501
+            )
+
         self.data = fetch_data(
             num_sites=self.num_sites,
             elements=self.elements,

@@ -2,8 +2,8 @@ from os import path
 
 from matminer.utils.io import load_dataframe_from_json
 
-from mp_time_split.core import MPTimeSplit
-from mp_time_split.utils.data import DUMMY_SNAPSHOT_NAME, get_data_home
+from mp_time_split.core import MPTimeSplit, get_data_home
+from mp_time_split.utils.data import DUMMY_SNAPSHOT_NAME
 
 dummy_data_path = path.join(get_data_home(), DUMMY_SNAPSHOT_NAME)
 
