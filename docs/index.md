@@ -13,7 +13,8 @@ also use the **MPTS-52** dataset and corresponding cross-validation and final te
 splits for model comparison and benchmarking. **MPTS-52** can be used with the metrics
 introduced in CDVAE's
 [compute_metrics.py](https://github.com/txie-93/cdvae/blob/main/scripts/compute_metrics.py)
-script (see [instructions](https://github.com/txie-93/cdvae/issues/10)).
+script (see [CDVAE instructions](https://github.com/txie-93/cdvae/issues/10). Check out
+our [quick start page](https://mp-time-split.readthedocs.io/en/latest/readme.html) for more details on how to use `mp_time_split`. Enjoy!
 
 > **Coming soon:** `matbench-generative`, a materials benchmarking platform for
 > generative models
