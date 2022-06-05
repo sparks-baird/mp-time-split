@@ -1,4 +1,10 @@
-from pyxtal import pyxtal
+try:
+    from pyxtal import pyxtal
+except ImportError as e:
+    print(e)
+    print(
+        "Failed to import pyxtal. Try `pip install mp_time_split[pyxtal]` or `pip install pyxtal`"  # noqa: E501
+    )
 
 
 class DummyGenerator:
