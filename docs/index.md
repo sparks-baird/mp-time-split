@@ -4,7 +4,7 @@ Download Materials Project time-splits for generative modeling benchmarking via 
 `mp_time_split` Python package. Download and store a snapshot dataset of experimentally
 verified Materials Project entries sorted by earliest publication year of the associated
 literature references. Alternatively, fetch your own dataset directly from Materials
-Project using your own search criteria. The snapshot dataset, labeled **MPTS-52**
+Project using your own search criteria. The snapshot dataset, [**MPTS-52**](https://doi.org/10.6084/m9.figshare.19991516.v4),
 contains only experimentally verified Materials Project entries with no more than 52
 sites) and acts as an extension to the state-of-the-art materials generative model
 introduced by Xie et al. via the [CDVAE](https://github.com/txie-93/cdvae) package. We recommend that in addition to the
