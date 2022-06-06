@@ -59,8 +59,8 @@ print(train_inputs.iloc[0], train_outputs)
 
 <table>
 <tr>
-<th> Original </th>
-<th> Decoded </th>
+<th> `train_inputs.iloc[0]` </th>
+<th> `train_outputs` </th>
 </tr>
 <tr>
 <td>
