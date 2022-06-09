@@ -33,7 +33,7 @@ filtering was applied (e.g. removal of radioactive elements).
 ## Quick Start
 ### Installation
 ```bash
-conda env create -n mp-time-split -c conda-forge mp_time_split
+conda env create -n mp-time-split -c conda-forge mp-time-split
 conda activate mp-time-split
 ```
 
@@ -99,9 +99,9 @@ For additional examples, see the [notebooks](notebooks) directory.
 ## Installation
 
 ### Anaconda
-Create an environment named (`-n`) `mp-time-split` with the Anaconda package `mp_time_split` intalled from the `conda-forge` channel (`-c`).
+Create an environment named (`-n`) `mp-time-split` with the Anaconda package `mp-time-split` intalled from the `conda-forge` channel (`-c`).
 ```bash
-conda env create -n mp-time-split -c conda-forge mp_time_split
+conda env create -n mp-time-split -c conda-forge mp-time-split
 ```
 
 ### PyPI
