@@ -166,7 +166,7 @@ Then take a look into the `scripts` and `notebooks` folders.
    ```bash
    conda env update -f environment.lock.yml --prune
    ``` -->
-   
+
 ## Project Organization
 
 ```
