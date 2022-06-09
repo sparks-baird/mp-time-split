@@ -51,6 +51,10 @@ if personal_conda_channel:
 
 my_recipe = Recipe(load_file=fpath)
 
+# my_recipe.add_section("outputs")
+# my_recipe["outputs"] = {"name": name}
+# my_recipe["outputs"].add_section("name")({"name": name.replace("-", "_")})
+
 # ensure proper order for conda-forge
 keys = list(my_recipe.keys())
 
