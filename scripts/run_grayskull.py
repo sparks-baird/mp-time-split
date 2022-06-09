@@ -1,11 +1,13 @@
 """Touch up the conda recipe from grayskull using conda-souschef."""
 import os
+from copy import copy
 from os import getcwd
 from os.path import basename, dirname, join, normpath
 from pathlib import Path
 from shutil import copyfile
 from warnings import warn
 
+import numpy as np
 from souschef.recipe import Recipe
 
 import mp_time_split as module
@@ -14,6 +16,11 @@ import mp_time_split as module
 
 
 name, version = module.__name__, module.__version__
+
+replace_underscores_with_hyphens = True
+
+if replace_underscores_with_hyphens:
+    name = name.replace("_", "-")
 
 src_dirname = "src"
 if basename(normpath(getcwd())) != src_dirname:
@@ -44,8 +51,31 @@ if personal_conda_channel:
 
 my_recipe = Recipe(load_file=fpath)
 
-bld = my_recipe["build"]
-bld.add_section({"noarch": "python"})
+# ensure proper order for conda-forge
+keys = list(my_recipe.keys())
+
+# https://docs.conda.io/projects/conda-build/en/latest/resources/define-metadata.html
+key_order = [
+    "package",
+    "source",
+    "build",
+    "requirements",
+    "test",
+    "outputs",
+    "about",
+    "app",
+    "extra",
+]
+unshared_keys = np.setdiff1d(key_order, keys)
+
+ordered_keys = copy(key_order)
+for key in unshared_keys:
+    ordered_keys.remove(key)
+
+for key in ordered_keys:
+    my_recipe.yaml.move_to_end(key)
+
+my_recipe["build"].add_section({"noarch": "python"})
 
 try:
     del my_recipe["build"]["skip"]
@@ -75,7 +105,8 @@ my_recipe["requirements"]["run"].append("importlib-metadata")
 
 my_recipe["about"]["doc_url"] = "mp-time-split.readthedocs.io"
 
-# # sometimes package names differ between PyPI and Anaconda but haven't been registered yet (e.g. `kaleido`) # noqa: E501
+# # sometimes package names differ between PyPI and Anaconda but haven't been registered
+# # yet on grayskull (e.g. `kaleido`)
 # my_recipe["requirements"]["run"].replace("kaleido", "python-kaleido")
 
 # # It's better to install some packages either exclusively via Anaconda or
@@ -89,8 +120,3 @@ my_recipe.save(fpath)
 if personal_conda_channel:
     my_recipe.save(fpath2)
     copyfile("LICENSE.txt", join(dirname(fpath2), "LICENSE.txt"))
-
-# %% Code Graveyard
-# blank_id = bld.value.index("")
-# last_id = len(bld.value) - 1
-# bld.value[blank_id], bld.value[last_id] = bld.value[last_id], bld.value[blank_id]
