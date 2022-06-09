@@ -1,7 +1,7 @@
 [![Project generated with PyScaffold](https://img.shields.io/badge/-PyScaffold-005CA0?logo=pyscaffold)](https://pyscaffold.org/)
 [![ReadTheDocs](https://readthedocs.org/projects/mp-time-split/badge/?version=latest)](https://mp-time-split.readthedocs.io/en/stable/)
 [![PyPI-Server](https://img.shields.io/pypi/v/mp-time-split.svg)](https://pypi.org/project/mp-time-split/)
-[![Conda-Forge](https://img.shields.io/conda/vn/conda-forge/mp-time-split.svg)](https://anaconda.org/conda-forge/mp-time-split)
+[![Conda Version](https://img.shields.io/conda/vn/conda-forge/mp_time_split.svg)](https://anaconda.org/conda-forge/mp_time_split)
 [![Coverage Status](https://coveralls.io/repos/github/sparks-baird/mp-time-split/badge.svg?branch=main)](https://coveralls.io/github/sparks-baird/mp-time-split?branch=main)
 ![Lines of code](https://img.shields.io/tokei/lines/github/sparks-baird/mp-time-split)
 <!-- These are examples of badges you might also want to add to your README. Update the URLs accordingly.
@@ -23,7 +23,7 @@ others](https://github.com/stars/sgbaird/lists/materials-generative-models) is l
 straightforward. Recently, [Xie et al.](http://arxiv.org/abs/2110.06197) introduced new
 benchmark datasets and metrics in [CDVAE](https://github.com/txie-93/cdvae) for several
 state-of-the-art algorithms. This repository acts as a supplement to CDVAE benchmarks,
-delivering a new benchmark dataset (`Materials_Project_Time_Split_52` or **MPTS-52**) with time-based (5$\times$train/val)
+delivering [a new benchmark dataset](https://figshare.com/articles/dataset/Materials_Project_Time_Split_Data/19991516) (`Materials_Project_Time_Split_52` or **MPTS-52**) with time-based (5 $\times$ train/val)
 +train/test splits suitable for cross-validated hyperparameter optimization and
 subsequent benchmarking via the test split. **MPTS-52** is most comparable to **MP-20**
 from [Xie et al.](http://arxiv.org/abs/2110.06197), with the difference that up to 52
@@ -33,7 +33,7 @@ filtering was applied (e.g. removal of radioactive elements).
 ## Quick Start
 ### Installation
 ```bash
-conda env create -n mp-time-split -c conda-forge mp-time-split
+conda env create -n mp-time-split -c conda-forge mp_time_split
 conda activate mp-time-split
 ```
 
@@ -98,6 +98,24 @@ For additional examples, see the [notebooks](notebooks) directory.
 
 ## Installation
 
+### Anaconda
+Create an environment named (`-n`) `mp-time-split` with the Anaconda package `mp_time_split` intalled from the `conda-forge` channel (`-c`).
+```bash
+conda env create -n mp-time-split -c conda-forge mp_time_split
+```
+
+### PyPI
+Optionally create and activate a conda environment (recommended to use an isolated environment of some kind):
+```bash
+conda env create -n mp-time-split python==3.9.* # 3.7.* or 3.8.* also OK
+conda activate mp-time-split
+```
+Install the `mp-time-split` package from PyPI.
+```bash
+pip install mp-time-split
+```
+
+### `environment.yml`
 In order to set up the necessary environment:
 
 1. review and uncomment what you need in `environment.yml` and create an environment `mp-time-split` with the help of [conda]:
@@ -109,6 +127,7 @@ In order to set up the necessary environment:
    conda activate mp-time-split
    ```
 
+### Local Installation
 > **_NOTE:_**  The conda environment will have mp-time-split installed in editable mode.
 > Some changes, e.g. in `setup.cfg`, might require you to run `pip install -e .` again.
 
@@ -133,7 +152,7 @@ Optional and needed only once after `git clone`:
 
 Then take a look into the `scripts` and `notebooks` folders.
 
-## Dependency Management & Reproducibility
+<!-- ## Dependency Management & Reproducibility
 
 1. Always keep your abstract (unpinned) dependencies updated in `environment.yml` and eventually
    in `setup.cfg` if you want to ship and install your package via `pip` later on.
@@ -146,7 +165,8 @@ Then take a look into the `scripts` and `notebooks` folders.
 3. Update your current environment with respect to a new `environment.lock.yml` using:
    ```bash
    conda env update -f environment.lock.yml --prune
-   ```
+   ``` -->
+   
 ## Project Organization
 
 ```
