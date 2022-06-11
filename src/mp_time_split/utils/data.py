@@ -10,6 +10,11 @@ pybtex.errors.set_strict_mode(False)
 SNAPSHOT_NAME = "mp_time_summary.json"
 DUMMY_SNAPSHOT_NAME = "mp_dummy_time_summary.json"
 
+noble = ["He", "Ar", "Ne", "Kr", "Xe", "Og", "Rn"]
+# fmt: off
+radioactive = ["Tc", "Pm", "Po", "At", "Rn", "Fr", "Ra", "Ac", "Th", "Pa", "U", "Np", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No", "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn", "Uut", "Fl", "Uup", "Lv", "Uus", "Uuo"]  # noqa: E501
+# fmt: on
+
 
 def get_discovery_dict(references: List[dict]) -> List[dict]:
     """Get a dictionary containing earliest bib info for each MP entry.

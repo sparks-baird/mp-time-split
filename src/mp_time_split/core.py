@@ -28,7 +28,12 @@ import pybtex.errors
 from matminer.utils.io import load_dataframe_from_json
 
 from mp_time_split import __version__
-from mp_time_split.utils.data import DUMMY_SNAPSHOT_NAME, SNAPSHOT_NAME
+from mp_time_split.utils.data import (
+    DUMMY_SNAPSHOT_NAME,
+    SNAPSHOT_NAME,
+    noble,
+    radioactive,
+)
 from mp_time_split.utils.split import AVAILABLE_MODES, mp_time_split
 
 pybtex.errors.set_strict_mode(False)
@@ -96,6 +101,7 @@ class MPTimeSplit:
         self,
         num_sites=None,
         elements=None,
+        exclude_elements=noble + radioactive,
         use_theoretical=False,
         mode="TimeSeriesSplit",
         target="energy_above_hull",
@@ -107,6 +113,7 @@ class MPTimeSplit:
 
         self.num_sites = num_sites
         self.elements = elements
+        self.exclude_elements = exclude_elements
         self.use_theoretical = use_theoretical
         self.mode = mode
         self.folds = FOLDS
@@ -125,6 +132,7 @@ class MPTimeSplit:
         self.data = fetch_data(
             num_sites=self.num_sites,
             elements=self.elements,
+            exclude_elements=self.exclude_elements,
             use_theoretical=self.use_theoretical,
             one_by_one=one_by_one,
         )

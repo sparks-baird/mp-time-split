@@ -19,6 +19,7 @@ def fetch_data(
     ],
     num_sites: Optional[Tuple[int, int]] = None,
     elements: Optional[List[str]] = None,
+    exclude_elements: Optional[List[str]] = None,
     use_theoretical: bool = False,
     return_both_if_experimental: bool = False,
     one_by_one: bool = False,
@@ -57,6 +58,9 @@ def fetch_data(
     elements : List[str]
         List of element symbols, e.g. ``["Ni", "Fe"]``. If ``None`` then all elements
         are allowed. By default None.
+    exclude_elements : List[str]
+        List of element symbols to _exclude_, e.g. ``["Ar", "Ne"]``. If ``None`` then
+        all elements are allowed. By default None.
     use_theoretical : bool, optional
         Whether to include both theoretical and experimental compounds or to filter down
         to only experimentally-verified compounds, by default False
@@ -112,7 +116,11 @@ def fetch_data(
 
     with MPRester(api_key) as mpr:
         results = mpr.summary.search(
-            num_sites=num_sites, elements=elements, fields=fields, **search_kwargs
+            num_sites=num_sites,
+            elements=elements,
+            exclude_elements=exclude_elements,
+            fields=fields,
+            **search_kwargs,
         )
 
         if fields is not None:
