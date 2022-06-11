@@ -12,7 +12,7 @@ DUMMY_SNAPSHOT_NAME = "mp_dummy_time_summary.json"
 
 noble = ["He", "Ar", "Ne", "Kr", "Xe", "Og", "Rn"]
 # fmt: off
-radioactive = ["Tc", "Pm", "Po", "At", "Rn", "Fr", "Ra", "Ac", "Th", "Pa", "U", "Np", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No", "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn", "Uut", "Fl", "Uup", "Lv", "Uus", "Uuo"]  # noqa: E501
+radioactive = ["U", "Th", "Ra", "Pu", "Po", "Rn", "Cm", "At", "Bk", "Fr", "Ac", "Am", "Bh", "Cf", "Np", "Ts", "Tc", "Md", "Lr", "Fm", "Hs", "Mt", "No", "Pm", "Rf", "Sg", "Ds", "Cn", "Rg", "Lv", "Og", "Fl", "Nh", "Db", "Es", "Mc", "Pa", "Bi", "Cs"]  # noqa: E501
 # fmt: on
 
 
