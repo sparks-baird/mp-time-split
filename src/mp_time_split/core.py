@@ -21,6 +21,7 @@ import sys
 from hashlib import md5
 from os import environ, path
 from pathlib import Path
+from typing import List, Literal, Optional, Tuple, Union
 from urllib.request import urlretrieve
 
 import pandas as pd
@@ -94,11 +95,14 @@ def get_data_home(data_home=None):
 class MPTimeSplit:
     def __init__(
         self,
-        num_sites=None,
-        elements=None,
-        use_theoretical=False,
-        mode="TimeSeriesSplit",
-        target="energy_above_hull",
+        num_sites: Optional[Tuple[int, int]] = None,
+        elements: Optional[List[str]] = None,
+        exclude_elements: Optional[
+            Union[List[str], Literal["noble", "radioactive", "noble+radioactive"]]
+        ] = None,
+        use_theoretical: bool = False,
+        mode: str = "TimeSeriesSplit",
+        target: str = "energy_above_hull",
     ) -> None:
         if mode not in AVAILABLE_MODES:
             raise NotImplementedError(
@@ -107,6 +111,7 @@ class MPTimeSplit:
 
         self.num_sites = num_sites
         self.elements = elements
+        self.exclude_elements = exclude_elements
         self.use_theoretical = use_theoretical
         self.mode = mode
         self.folds = FOLDS
@@ -125,6 +130,7 @@ class MPTimeSplit:
         self.data = fetch_data(
             num_sites=self.num_sites,
             elements=self.elements,
+            exclude_elements=self.exclude_elements,
             use_theoretical=self.use_theoretical,
             one_by_one=one_by_one,
         )
