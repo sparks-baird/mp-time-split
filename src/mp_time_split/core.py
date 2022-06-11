@@ -103,6 +103,7 @@ class MPTimeSplit:
         use_theoretical: bool = False,
         mode: str = "TimeSeriesSplit",
         target: str = "energy_above_hull",
+        save_dir=None,
     ) -> None:
         if mode not in AVAILABLE_MODES:
             raise NotImplementedError(
