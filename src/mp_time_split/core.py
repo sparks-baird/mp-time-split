@@ -103,6 +103,7 @@ class MPTimeSplit:
         use_theoretical: bool = False,
         mode: str = "TimeSeriesSplit",
         target: str = "energy_above_hull",
+        save_dir=None,
     ) -> None:
         if mode not in AVAILABLE_MODES:
             raise NotImplementedError(
@@ -115,6 +116,13 @@ class MPTimeSplit:
         self.use_theoretical = use_theoretical
         self.mode = mode
         self.folds = FOLDS
+
+        if save_dir is None:
+            self.save_dir = get_data_home()
+        else:
+            self.save_dir = save_dir
+
+        Path(self.save_dir).mkdir(exist_ok=True, parents=True)
 
         self.target = target
 
@@ -147,7 +155,7 @@ class MPTimeSplit:
     def load(self, url=None, checksum=None, dummy=False, force_download=False):
         name = SNAPSHOT_NAME if not dummy else DUMMY_SNAPSHOT_NAME
         name = name + ".gz"
-        data_path = path.join(get_data_home(), name)
+        data_path = path.join(self.save_dir, name)
 
         is_on_disk = Path(data_path).is_file()
 
@@ -227,13 +235,23 @@ def parse_args(args):
     Returns:
       :obj:`argparse.Namespace`: command line parameters namespace
     """
-    parser = argparse.ArgumentParser(description="Just a Fibonacci demonstration")
+    parser = argparse.ArgumentParser(
+        description="For downloading mp-time-split snapshot."
+    )
     parser.add_argument(
         "--version",
         action="version",
         version=f"$mp_time_split {__version__}",
     )
-    parser.add_argument(dest="n", help="n-th Fibonacci number", type=int, metavar="INT")
+    parser.add_argument(
+        "-s",
+        "--save-dir",
+        dest="save_dir",
+        default=".",
+        help="Directory in which to save json.gz snapshot.",
+        type=str,
+        metavar="STRING",
+    )
     parser.add_argument(
         "-v",
         "--verbose",
@@ -270,13 +288,14 @@ def main(args):
     ``stdout`` in a nicely formatted message.
     Args:
       args (List[str]): command line parameters as list of strings
-          (for example  ``["--verbose", "42"]``).
+          (for example  ``["--verbose", "./data"]``).
     """
     args = parse_args(args)
     setup_logging(args.loglevel)
-    _logger.debug("Starting crazy calculations...")
-    print("The {}-th Fibonacci number is {}".format(args.n, fib(args.n)))
-    _logger.info("Script ends here")
+    _logger.debug("Beginning download of mp-time-split snapshot")
+    mpt = MPTimeSplit(save_dir=args.save_dir)
+    mpt.load()
+    _logger.info(f"The snapshot is saved at {args.save_dir}")
 
 
 def run():
