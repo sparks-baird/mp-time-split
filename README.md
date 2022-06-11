@@ -33,7 +33,7 @@ filtering was applied (e.g. removal of radioactive elements).
 ## Quick Start
 ### Installation
 ```bash
-conda env create -n mp-time-split -c conda-forge mp_time_split
+conda env create -n mp-time-split -c conda-forge mp-time-split
 conda activate mp-time-split
 ```
 
@@ -94,14 +94,24 @@ PeriodicSite: V (0.0000, 0.0000, 0.0000) [0.0000, 0.0000, 0.0000]
 </tr>
 </table>
 
+```{note}
+Data (e.g. `train_inputs`, `train_outputs`) is sorted by earliest publication year.
+The Materials Project ID number is used as the pandas `Series` index. The "mp-" and
+"mvc" suffixes are dropped, except that "-" is retained in case of "mvc-" to make it
+negative in the index and distinguish between "mp-" and "mvc-" type entries. This is
+to make it easy to sort the entries based on the index. See https://matsci.org/t/how-do-i-do-a-time-split-of-materials-project-entries-e-g-pre-2018-vs-post-2018/42584/2?u=sgbaird
+for more information. More detailed information (e.g. BibTeX references) can be accessed
+via `mpt.data`.
+```
+
 For additional examples, see the [notebooks](notebooks) directory.
 
 ## Installation
 
 ### Anaconda
-Create an environment named (`-n`) `mp-time-split` with the Anaconda package `mp_time_split` intalled from the `conda-forge` channel (`-c`).
+Create an environment named (`-n`) `mp-time-split` with the Anaconda package `mp-time-split` intalled from the `conda-forge` channel (`-c`).
 ```bash
-conda env create -n mp-time-split -c conda-forge mp_time_split
+conda env create -n mp-time-split -c conda-forge mp-time-split
 ```
 
 ### PyPI

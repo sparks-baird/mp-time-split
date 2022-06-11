@@ -1,11 +1,14 @@
-from typing import List, Optional, Tuple, Union
+from typing import List, Literal, Optional, Tuple, Union
 
 import pandas as pd
 from mp_api import MPRester
 from mp_api.core.client import DEFAULT_API_KEY
 from tqdm import tqdm
 
-from mp_time_split.utils.data import get_discovery_dict
+from mp_time_split.utils.data import get_discovery_dict, noble, radioactive
+
+# ensure match between following and `Literal` type hint for `exclude_elements`
+AVAILABLE_EXCLUDE_STRS = ["noble", "radioactive", "noble+radioactive"]
 
 
 def fetch_data(
@@ -19,6 +22,9 @@ def fetch_data(
     ],
     num_sites: Optional[Tuple[int, int]] = None,
     elements: Optional[List[str]] = None,
+    exclude_elements: Optional[
+        Union[List[str], Literal["noble", "radioactive", "noble+radioactive"]]
+    ] = None,
     use_theoretical: bool = False,
     return_both_if_experimental: bool = False,
     one_by_one: bool = False,
@@ -57,6 +63,14 @@ def fetch_data(
     elements : List[str]
         List of element symbols, e.g. ``["Ni", "Fe"]``. If ``None`` then all elements
         are allowed. By default None.
+    exclude_elements : Optional[
+                            Union[List[str], Literal["noble", "radioactive",
+                            "noble+radioactive"]]
+                        ]
+        List of element symbols to _exclude_, e.g. ``["Ar", "Ne"]``. If ``None`` then
+        all elements are allowed. If a supported string value ("noble", "radioactive",
+        or "noble+radioactive"), then filters out the appropriate elements. By default
+        None.
     use_theoretical : bool, optional
         Whether to include both theoretical and experimental compounds or to filter down
         to only experimentally-verified compounds, by default False
@@ -110,9 +124,29 @@ def fetch_data(
         if not use_theoretical and "theoretical" not in fields:
             fields.append("theoretical")
 
+    if exclude_elements is None:
+        excl_elems = None
+    elif isinstance(exclude_elements, str):
+        if exclude_elements not in AVAILABLE_EXCLUDE_STRS:
+            raise NotImplementedError(
+                f"Because str passed to `exclude_elements` instead of list of str, expected one of {AVAILABLE_EXCLUDE_STRS}"  # noqa: E501
+            )
+        if exclude_elements == "noble":
+            excl_elems = noble
+        elif exclude_elements == "radioactive":
+            excl_elems = radioactive
+        elif exclude_elements == "noble+radioactive":
+            excl_elems = noble + radioactive
+    else:
+        excl_elems = exclude_elements
+
     with MPRester(api_key) as mpr:
         results = mpr.summary.search(
-            num_sites=num_sites, elements=elements, fields=fields, **search_kwargs
+            num_sites=num_sites,
+            elements=elements,
+            exclude_elements=excl_elems,
+            fields=fields,
+            **search_kwargs,
         )
 
         if fields is not None:
