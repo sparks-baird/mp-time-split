@@ -21,6 +21,7 @@ import sys
 from hashlib import md5
 from os import environ, path
 from pathlib import Path
+from typing import List, Literal, Optional, Tuple, Union
 from urllib.request import urlretrieve
 
 import pandas as pd
@@ -28,12 +29,7 @@ import pybtex.errors
 from matminer.utils.io import load_dataframe_from_json
 
 from mp_time_split import __version__
-from mp_time_split.utils.data import (
-    DUMMY_SNAPSHOT_NAME,
-    SNAPSHOT_NAME,
-    noble,
-    radioactive,
-)
+from mp_time_split.utils.data import DUMMY_SNAPSHOT_NAME, SNAPSHOT_NAME
 from mp_time_split.utils.split import AVAILABLE_MODES, mp_time_split
 
 pybtex.errors.set_strict_mode(False)
@@ -99,12 +95,14 @@ def get_data_home(data_home=None):
 class MPTimeSplit:
     def __init__(
         self,
-        num_sites=None,
-        elements=None,
-        exclude_elements=noble + radioactive,
-        use_theoretical=False,
-        mode="TimeSeriesSplit",
-        target="energy_above_hull",
+        num_sites: Optional[Tuple[int, int]] = None,
+        elements: Optional[List[str]] = None,
+        exclude_elements: Optional[
+            Union[List[str], Literal["noble", "radioactive", "noble+radioactive"]]
+        ] = None,
+        use_theoretical: bool = False,
+        mode: str = "TimeSeriesSplit",
+        target: str = "energy_above_hull",
     ) -> None:
         if mode not in AVAILABLE_MODES:
             raise NotImplementedError(
