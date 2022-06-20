@@ -21,12 +21,13 @@ import sys
 from hashlib import md5
 from os import environ, path
 from pathlib import Path
-from typing import List, Literal, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 from urllib.request import urlretrieve
 
 import pandas as pd
 import pybtex.errors
 from matminer.utils.io import load_dataframe_from_json
+from typing_extensions import Literal
 
 from mp_time_split import __version__
 from mp_time_split.utils.data import DUMMY_SNAPSHOT_NAME, SNAPSHOT_NAME

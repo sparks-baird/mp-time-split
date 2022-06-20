@@ -1,9 +1,10 @@
-from typing import List, Literal, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import pandas as pd
 from mp_api import MPRester
 from mp_api.core.client import DEFAULT_API_KEY
 from tqdm import tqdm
+from typing_extensions import Literal
 
 from mp_time_split.utils.data import get_discovery_dict, noble, radioactive
 
