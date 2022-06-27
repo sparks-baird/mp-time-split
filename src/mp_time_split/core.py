@@ -21,6 +21,7 @@ import sys
 from hashlib import md5
 from os import environ, path
 from pathlib import Path
+from shutil import move
 from typing import List, Optional, Tuple, Union
 from urllib.request import urlretrieve
 
@@ -176,7 +177,10 @@ class MPTimeSplit:
             else:
                 checksum_frozen = None
 
-            urlretrieve(url, data_path)
+            # download to temp file in case interrupted partway
+            data_path_tmp = data_path + "tmp"
+            urlretrieve(url, data_path_tmp)
+            move(data_path_tmp, data_path)
         else:
             checksum_frozen = None
 
