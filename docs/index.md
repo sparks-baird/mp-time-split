@@ -16,8 +16,20 @@ introduced in CDVAE's
 script (see [CDVAE instructions](https://github.com/txie-93/cdvae/issues/10)). Check out
 our [quick start page](https://mp-time-split.readthedocs.io/en/latest/readme.html) for more details on how to use `mp_time_split`. Enjoy!
 
-> **Coming soon:** `matbench-generative`, a materials benchmarking platform for
+> **Coming soon:** `mp-time-split`, a materials benchmarking platform for
 > generative models
+
+<a class="github-button" href="https://github.com/sparks-baird/mp-time-split"
+data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star
+sparks-baird/mp-time-split on GitHub">Star</a>
+<a class="github-button"
+href="https://github.com/sgbaird" data-size="large" data-show-count="true"
+aria-label="Follow @sgbaird on GitHub">Follow @sgbaird</a>
+<a class="github-button" href="https://github.com/sparks-baird/mp-time-split/issues"
+data-icon="octicon-issue-opened" data-size="large" data-show-count="true"
+aria-label="Issue sparks-baird/mp-time-split on GitHub">Issue</a>
+<a class="github-button" href="https://github.com/sparks-baird/mp-time-split/discussions" data-icon="octicon-comment-discussion" data-size="large" aria-label="Discuss sparks-baird/mp-time-split on GitHub">Discuss</a>
+<br><br>
 
 <!-- ## Note
 
@@ -53,3 +65,5 @@ Module Reference <api/modules>
 [Markdown]: https://daringfireball.net/projects/markdown/
 [reStructuredText]: http://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
 [MyST]: https://myst-parser.readthedocs.io/en/latest/
+
+<script async defer src="https://buttons.github.io/buttons.js"></script>
