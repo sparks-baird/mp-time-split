@@ -16,8 +16,8 @@ introduced in CDVAE's
 script (see [CDVAE instructions](https://github.com/txie-93/cdvae/issues/10)). Check out
 our [quick start page](https://mp-time-split.readthedocs.io/en/latest/readme.html) for more details on how to use `mp_time_split`. Enjoy!
 
-> **Coming soon:** `mp-time-split`, a materials benchmarking platform for
-> generative models
+> **See also:** [`matbench-genmetrics`](https://matbench-genmetrics.readthedocs.io/), a materials benchmarking platform for
+> generative models and [`xtal2png`](https://xtal2png.readthedocs.io/en/latest/), a tool converting between a crystal structure and a PNG image representation for generative modeling
 
 <a class="github-button" href="https://github.com/sparks-baird/mp-time-split"
 data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star
