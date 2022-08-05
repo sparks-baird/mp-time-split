@@ -25,7 +25,11 @@ benchmark datasets and metrics in [CDVAE](https://github.com/txie-93/cdvae) for 
 state-of-the-art algorithms. This repository acts as a supplement to CDVAE benchmarks,
 delivering [a new benchmark dataset](https://figshare.com/articles/dataset/Materials_Project_Time_Split_Data/19991516) (`Materials_Project_Time_Split_52` or **MPTS-52**) with time-based (5 $\times$ train/val)
 +train/test splits suitable for cross-validated hyperparameter optimization and
-subsequent benchmarking via the test split. **MPTS-52** is most comparable to **MP-20**
+subsequent benchmarking via the test split.
+
+<p align="center"><img src="https://github.com/sparks-baird/mp-time-split/blob/main/reports/figures/time-split-abstract.png" width=450></p>
+
+**MPTS-52** is most comparable to **MP-20**
 from [Xie et al.](http://arxiv.org/abs/2110.06197), with the difference that up to 52
 atoms are allowed and possibly a difference in the unique elements, as no elemental
 filtering was applied (e.g. removal of radioactive elements).
