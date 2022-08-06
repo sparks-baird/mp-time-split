@@ -27,7 +27,7 @@ delivering [a new benchmark dataset](https://figshare.com/articles/dataset/Mater
 +train/test splits suitable for cross-validated hyperparameter optimization and
 subsequent benchmarking via the test split.
 
-<p align="center"><img src="https://github.com/sparks-baird/mp-time-split/blob/main/reports/figures/time-split-abstract.png" width=450></p>
+<p align="center"><img src="https://github.com/sparks-baird/mp-time-split/raw/main/reports/figures/time-split-abstract.png" width=450></p>
 
 **MPTS-52** is most comparable to **MP-20**
 from [Xie et al.](http://arxiv.org/abs/2110.06197), with the difference that up to 52
