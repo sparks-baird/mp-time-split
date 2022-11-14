@@ -69,6 +69,9 @@ jobs:
       - name: Retrieve pre-built distribution files
         uses: actions/download-artifact@v3
         with: {name: python-distribution-files, path: dist/}
+      - name: Install mp-api if on Python >= 3.8
+        run: pip install mp-api
+        if: ${{ matrix.python != "3.7" }}
       - name: Run tests
         env:
           MP_API_KEY: ${{ secrets.MP_API_KEY }}
