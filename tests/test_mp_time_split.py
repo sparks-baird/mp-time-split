@@ -1,5 +1,7 @@
+import sys
 from os import path
 
+import pytest
 from matminer.utils.io import load_dataframe_from_json
 
 from mp_time_split.core import MPTimeSplit, get_data_home
@@ -22,6 +24,7 @@ elements = ["V"]
 #         )
 
 
+@pytest.mark.skipif(sys.version_info < (3, 8), reason="requires Python 3.8+")
 def test_data_snapshot_one_by_one():
     dummy_expt_df_check = load_dataframe_from_json(dummy_data_path)
     mpt = MPTimeSplit(num_sites=num_sites, elements=elements)
@@ -33,6 +36,7 @@ def test_data_snapshot_one_by_one():
         )
 
 
+@pytest.mark.skipif(sys.version_info < (3, 8), reason="requires Python 3.8+")
 def test_get_train_and_val_data():
     mpt = MPTimeSplit(num_sites=num_sites, elements=elements)
     mpt.fetch_data(one_by_one=True)
@@ -51,6 +55,7 @@ def test_get_train_and_val_data():
     return train_inputs, val_inputs, train_outputs, val_outputs
 
 
+@pytest.mark.skipif(sys.version_info < (3, 8), reason="requires Python 3.8+")
 def test_get_test_data():
     mpt = MPTimeSplit(num_sites=num_sites, elements=elements)
     mpt.fetch_data(one_by_one=True)
