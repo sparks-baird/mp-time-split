@@ -25,7 +25,7 @@ affiliations:
  - name: Toyota Research Institute, Los Altos, CA, USA
    index: 2
 date: 14 November 2022
-bibliography: mp-time-split.bib
+bibliography: paper.bib
 
 # # Optional fields if submitting to a AAS journal too, see this blog post:
 # # https://blog.joss.theoj.org/2018/12/a-new-collaboration-with-aas-publishing
