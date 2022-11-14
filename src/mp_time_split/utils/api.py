@@ -10,7 +10,7 @@ except Exception as e:
     from mp_api import MPRester
 
 
-from mp_api.core.client import DEFAULT_API_KEY
+from mp_api.client.core.client import DEFAULT_API_KEY
 from tqdm import tqdm
 from typing_extensions import Literal
 
