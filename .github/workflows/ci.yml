@@ -76,7 +76,7 @@ jobs:
         env:
           MP_API_KEY: ${{ secrets.MP_API_KEY }}
         run: >-
-          pipx run --python ${{ matrix.python }} tox
+          pipx run --python $(which python) tox
           --installpkg '${{ needs.prepare.outputs.wheel-distribution }}'
           -- -rFEx --durations 10 --color yes
       - name: Generate coverage report
