@@ -132,10 +132,9 @@ class MPTimeSplit:
         try:
             from mp_time_split.utils.api import fetch_data
         except ImportError as e:
-            print(e)
-            print(
+            raise ImportError(
                 "Failed to import `fetch_data()`. Try `pip install mp_time_split[api]` or `pip install mp-api` to install the optional `mp-api` dependency. Note that this requires Python >=3.8"  # noqa: E501
-            )
+            ) from e
 
         self.data = fetch_data(
             num_sites=self.num_sites,
