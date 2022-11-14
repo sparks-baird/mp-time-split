@@ -1,7 +1,15 @@
 from typing import List, Optional, Tuple, Union
 
 import pandas as pd
-from mp_api import MPRester
+
+try:
+    from mp_api.client import MPRester
+except Exception as e:
+    print(e)
+    print("Falling back to from mp_api import MPRester")
+    from mp_api import MPRester
+
+
 from mp_api.core.client import DEFAULT_API_KEY
 from tqdm import tqdm
 from typing_extensions import Literal
