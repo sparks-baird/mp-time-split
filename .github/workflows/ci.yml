@@ -78,7 +78,8 @@ jobs:
         run: >-
           pipx run tox
           --installpkg '${{ needs.prepare.outputs.wheel-distribution }}'
-          -- -rFEx --durations 10 --color yes --python $(which python)
+          --python $(which python)
+          -- -rFEx --durations 10 --color yes
       - name: Generate coverage report
         run: pipx run coverage lcov -o coverage.lcov
       - name: Upload partial coverage report
