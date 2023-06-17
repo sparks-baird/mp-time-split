@@ -1,5 +1,9 @@
 # Materials Project Time Splits
 
+```{warning}
+  ⚠️`mp-time-split` has been moved to [`matbench-genmetrics.mp_time_split`](https://github.com/sparks-baird/matbench-genmetrics) as a namespace package⚠️
+```
+
 Download Materials Project time-splits for generative modeling benchmarking via the
 `mp_time_split` Python package. Download and store a snapshot dataset of experimentally
 verified Materials Project entries sorted by earliest publication year of the associated
