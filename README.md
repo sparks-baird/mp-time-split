@@ -10,6 +10,8 @@
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Twitter)](https://twitter.com/mp-time-split)
 -->
 
+> **⚠️`mp-time-split` has been moved to [`matbench-genmetrics.mp_time_split`](https://github.com/sparks-baird/matbench-genmetrics) as a namespace package⚠️**
+
 # mp-time-split
 
 > Use Materials Project time-splits for generative modeling benchmarking.
