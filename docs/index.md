@@ -1,7 +1,7 @@
 # Materials Project Time Splits
 
 ```{warning}
-  As of June 2023, `mp-time-split` has migrated to [matbench-genmetrics](https://github.com/sparks-baird/matbench-genmetrics) as a namespace package
+  As of June 2023, `mp-time-split` has migrated to [**`matbench-genmetrics`**](https://github.com/sparks-baird/matbench-genmetrics) as a namespace package
 ```
 
 Download Materials Project time-splits for generative modeling benchmarking via the
