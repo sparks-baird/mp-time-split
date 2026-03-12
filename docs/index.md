@@ -1,7 +1,7 @@
 # Materials Project Time Splits
 
 ```{warning}
-  As of June 2023, `mp-time-split` has migrated to [**`matbench-genmetrics`**](https://github.com/sparks-baird/matbench-genmetrics) as a namespace package
+  As of June 2023, `mp-time-split` has migrated to [matbench-genmetrics](https://github.com/sparks-baird/matbench-genmetrics) as a namespace package. For citing, please use Baird et al., (2024). matbench-genmetrics: A Python library for benchmarking crystal structure generative models using time-based splits of Materials Project structures. Journal of Open Source Software, 9(97), 5618, https://doi.org/10.21105/joss.05618
 ```
 
 Download Materials Project time-splits for generative modeling benchmarking via the
